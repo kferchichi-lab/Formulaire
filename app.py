@@ -40,7 +40,7 @@ with st.sidebar:
     st.warning("⚠️ Tolérance : +/- 10°C")
 
 # --- CONTENU PRINCIPAL ---
-st.title("📝 Signalement Arrêt Production (Chapeau)")
+st.title("📝 Suivi Arrêts Production : Problème Chapeaux)")
 
 if not presse_choisie:
     st.warning("👈 Veuillez sélectionner une presse dans le menu à gauche pour accéder au formulaire.")
@@ -59,14 +59,13 @@ with st.form("form_diagnostic", clear_on_submit=True):
     
     with col2:
         num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12")
-        duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=5)
+        duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=4)
         cause = st.selectbox("Cause identifiée (Code)", [
-            "M - Matière (Lopin, Coupe, Température)",
-            "R - Réglage (Pression, Alignement, Vitesse)",
-            "O - Outillage (Chapeau, Casse, Usure)",
-            "L - Lubrification (Collage, Buse bouchée)",
-            "A - Autre (À préciser)"
-        ])
+            "T - Problème de Température non homogène ( Filière, conteneur, lopin)",
+            "H - Problème Hydraulique ( Pression de bridage, de chape…)",
+            "O - Outillage : face de contact entre conteneur et filière ( Usure, casse…)",
+            "R - Raclage du conteneur : Lopin déformé, 2 morceaux du lopin non alignés.. ",
+            ])
 
     commentaire = st.text_area("Observations / Détails de l'incident")
     
