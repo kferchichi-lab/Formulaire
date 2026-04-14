@@ -124,6 +124,7 @@ with tab_saisie:
 with tab_base:
     st.subheader("📊 Historique Global des Arrêts")
     if os.path.isfile(DB_FILE):
+        # Charger les données
         df_affichage = pd.read_csv(DB_FILE, sep=";")
         
         # Filtres interactifs
@@ -133,25 +134,47 @@ with tab_base:
         with col_f2:
             filtre_cause = st.multiselect("Filtrer par Cause :", options=df_affichage["Cause"].unique())
         
+        df_filtre = df_affichage.copy()
         if filtre_presse:
-            df_affichage = df_affichage[df_affichage["Presse"].isin(filtre_presse)]
+            df_filtre = df_filtre[df_filtre["Presse"].isin(filtre_presse)]
         if filtre_cause:
-            df_affichage = df_affichage[df_affichage["Cause"].isin(filtre_cause)]
-            
+            df_filtre = df_filtre[df_filtre["Cause"].isin(filtre_cause)]
+
+        # --- SECTION SUPPRESSION ---
+        st.markdown("### 🗑️ Gestion des données")
+        # On crée une liste d'index pour la sélection
+        indices_a_supprimer = st.multiselect(
+            "Sélectionnez les lignes à supprimer (par leur index) :", 
+            options=df_filtre.index,
+            format_func=lambda x: f"Ligne {x} : {df_filtre.loc[x, 'Date']} - {df_filtre.loc[x, 'Filiere']}"
+        )
+
+        if st.button("❌ SUPPRIMER LES LIGNES SÉLECTIONNÉES", type="secondary"):
+            if indices_a_supprimer:
+                # Supprimer du DataFrame original (pour ne pas casser les index)
+                df_final = df_affichage.drop(indices_a_supprimer)
+                # Sauvegarder à nouveau le fichier complet (écrase l'ancien)
+                df_final.to_csv(DB_FILE, index=False, sep=";", encoding="utf-8-sig")
+                st.success("Lignes supprimées avec succès !")
+                st.rerun() # Rafraîchit la page pour mettre à jour le tableau
+            else:
+                st.warning("Veuillez sélectionner au moins une ligne.")
+
+        st.divider()
+
         # Affichage du tableau (Le Grand Tableau)
-        st.dataframe(df_affichage, use_container_width=True)
+        st.dataframe(df_filtre, use_container_width=True)
         
         # Bouton d'export Excel
-        csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
+        csv = df_filtre.to_csv(index=False, sep=";").encode('utf-8-sig')
         st.download_button(
-            label="📥 Télécharger la base complète pour Excel",
+            label="📥 Télécharger la sélection pour Excel",
             data=csv,
             file_name=f"base_arrets_TPR_{datetime.now().strftime('%d_%m_%Y')}.csv",
             mime="text/csv",
         )
     else:
         st.info("Aucune donnée n'a encore été enregistrée.")
-
 # --- FOOTER ---
 st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
 st.markdown(
