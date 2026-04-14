@@ -56,7 +56,7 @@ with st.form("form_op", clear_on_submit=True):
             "R - Raclage du conteneur"
         ])
     obs = st.text_area("Observations")
-    if st.form_submit_button("ENREGISTRER L'INCIDENT"):
+    if st.form_submit_button("ENREGISTRER LE CHAPEAU"):
         if ref_f and num_l:
             sauvegarder_donnees({
                 "Date": date_j.strftime("%d/%m/%Y"), "Heure": datetime.now().strftime("%H:%M"),
