@@ -55,8 +55,8 @@ with st.sidebar:
     st.sidebar.markdown(f"""
 <div style="background-color: #e1f5fe; padding: 10px; border-radius: 5px;">
     <b>🌡️ RAPPEL TEMPÉRATURES :</b><br>
-    • Conteneur : 400-430°C<br>
-    • Filière : 450°C<br><br>
+    • Conteneur : <b>400-430°C<b><br>
+    • Filière : <b>450°C<b><br>
     • Lopin (Plate) : <b>440-470°C</b><br>
     • Lopin (Tubulaire) : <b>470-510°C</b>
 </div>
