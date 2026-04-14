@@ -57,4 +57,30 @@ with st.form("form_diagnostic", clear_on_submit=True):
         poste = st.radio("Poste de travail", ["A", "B", "C"], horizontal=True)
         ref_filiere = st.text_input("Référence Filière", placeholder="Ex: F105")
     
-    with col
+    with col2:
+        num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12")
+        duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=5)
+        cause = st.selectbox("Cause identifiée (Code)", [
+            "M - Matière (Lopin, Coupe, Température)",
+            "R - Réglage (Pression, Alignement, Vitesse)",
+            "O - Outillage (Chapeau, Casse, Usure)",
+            "L - Lubrification (Collage, Buse bouchée)",
+            "A - Autre (À préciser)"
+        ])
+
+    commentaire = st.text_area("Observations / Détails de l'incident")
+    
+    submitted = st.form_submit_button("ENREGISTRER L'INCIDENT")
+
+# --- VALIDATION ---
+if submitted:
+    if not ref_filiere or not num_lopin:
+        st.error("Veuillez remplir les champs obligatoires (Filière et Lopin).")
+    else:
+        st.success(f"Données enregistrées pour la {presse_choisie} - Code {cause[0]}")
+        # Note : Ici vous pouvez connecter une base de données ou un fichier CSV
+        st.snow()
+
+# --- PIED DE PAGE ---
+st.divider()
+st.caption("Direction Maintenance et Travaux Neufs - TPR 2026")
