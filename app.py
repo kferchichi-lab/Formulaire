@@ -34,7 +34,7 @@ with st.sidebar:
     st.info("**🌡️ RAPPELS :**\n\nConteneur: 400-430°C\n\nFilière: 450°C\n\nLopin Plate: 440-470°C\n\nLopin Tub: 470-510°C")
 
 # --- FORMULAIRE ---
-st.title("📝 Signalement Incident")
+st.title("📝 Signalement du chapeau")
 
 if not presse_choisie:
     st.warning("👈 Sélectionnez votre presse à gauche.")
