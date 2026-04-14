@@ -84,7 +84,7 @@ with tab_saisie:
             with col1:
                 date_j = st.date_input("Date de l'arrêt", datetime.now())
                 poste = st.radio("Poste de travail", ["A", "B", "C"], horizontal=True)
-                ref_filiere = st.text_input("Référence Filière", placeholder="Ex: F105")
+                ref_filiere = st.text_input("Référence Filière", placeholder="Ex: 52000")
             
             with col2:
                 num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12")
