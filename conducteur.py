@@ -47,7 +47,7 @@ CONFIG_PRESSES = {
 
 # --- SIDEBAR : CHOIX ET RAPPELS ---
 with st.sidebar:
-    st.header("⚙️ Configuration")
+    st.header("⚙️ Configuration Machine")
     presse_choisie = st.selectbox("SÉLECTIONNER LA PRESSE :", options=list(CONFIG_PRESSES.keys()), index=None, placeholder="Choisir...")
     
     st.divider()
