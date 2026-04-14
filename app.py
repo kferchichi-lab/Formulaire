@@ -40,7 +40,7 @@ with st.sidebar:
     st.warning("⚠️ Tolérance : +/- 10°C")
 
 # --- CONTENU PRINCIPAL ---
-st.title("📝 Suivi Arrêts Production : Problème Chapeaux)")
+st.title("📝 Suivi Arrêts Production : Problème Chapeaux")
 
 if not presse_choisie:
     st.warning("👈 Veuillez sélectionner une presse dans le menu à gauche pour accéder au formulaire.")
