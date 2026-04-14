@@ -55,10 +55,10 @@ with st.sidebar:
     st.sidebar.markdown(f"""
 <div style="background-color: #e1f5fe; padding: 10px; border-radius: 5px;">
     <b>🌡️ RAPPEL TEMPÉRATURES :</b><br>
-    • Conteneur : <b>400-430°C<b><br>
+    • <b>Conteneur :<b> <b>400-430°C<b><br>
     • Filière : <b>450°C<b><br>
-    • Lopin (Plate) : <b>440-470°C</b><br>
-    • Lopin (Tubulaire) : <b>470-510°C</b>
+    • Lopin (Filière plate) : <b>440-470°C</b><br>
+    • Lopin (Filière tubulaire) : <b>470-510°C</b>
 </div>
 """, unsafe_allow_html=True)
     st.warning("⚠️ Tolérance : +/- 10°C")
