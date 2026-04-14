@@ -143,6 +143,14 @@ if submitted:
         # Note : Ici vous pouvez connecter une base de données ou un fichier CSV
         st.snow()
 
-# --- PIED DE PAGE ---
-st.divider()
-st.caption("Direction Maintenance et Travaux Neufs - TPR 2026")
+st.markdown("<div style='height: 60px;'></div>", unsafe_allow_html=True)
+st.markdown(
+    f"""
+    <div style="text-align: center; color: gray; font-size: 0.8em; border-top: 1px solid #eee; padding-top: 10px;">
+        © 2026 TPR - Système d'Assistance Technique | {presse_choisie} <br>
+        Développé pour l'assistance opérateur en extrusion <br>
+        Direction Maintenance et Travaux Neufs - DMTN 
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
