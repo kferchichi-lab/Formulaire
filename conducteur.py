@@ -51,19 +51,16 @@ with st.sidebar:
     presse_choisie = st.selectbox("SÉLECTIONNER LA PRESSE :", options=list(CONFIG_PRESSES.keys()), index=None, placeholder="Choisir...")
     
     st.divider()
-    st.markdown("<div class='temp-header'>🌡️ RAPPEL TEMPÉRATURES</div>", unsafe_allow_html=True)
-    st.info("""
-    - **Conteneur :** 400 - 430°C
-    - **Filière :** 450°C
-    """
-    """
-    - **Lopin (Filière Plate) :** 
-    440 - 470°C
-    """
-    """
-    - **Lopin (Filière Tubulaire) :**
-    470 - 510°C
-    """)
+
+  st.sidebar.markdown(f"""
+<div style="background-color: #e1f5fe; padding: 10px; border-radius: 5px;">
+    <b>🌡️ RAPPEL TEMPÉRATURES :</b><br>
+    • Conteneur : 400-430°C<br>
+    • Filière : 450°C<br><br>
+    • Lopin (Plate) : <b>440-470°C</b><br>
+    • Lopin (Tubulaire) : <b>470-510°C</b>
+</div>
+""", unsafe_allow_html=True)
     st.warning("⚠️ Tolérance : +/- 10°C")
 
 # --- LOGOS ET TITRE ---
