@@ -52,7 +52,7 @@ with st.sidebar:
     
     st.divider()
 
-  st.sidebar.markdown(f"""
+    st.sidebar.markdown(f"""
 <div style="background-color: #e1f5fe; padding: 10px; border-radius: 5px;">
     <b>🌡️ RAPPEL TEMPÉRATURES :</b><br>
     • Conteneur : 400-430°C<br>
