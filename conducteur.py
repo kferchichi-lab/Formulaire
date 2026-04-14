@@ -56,13 +56,13 @@ with st.sidebar:
     - **Conteneur :** 400 - 430°C
     - **Filière :** 450°C
     """
+    """
     - **Lopin (Filière Plate) :** 
     440 - 470°C
     """
     """
-    - **Lopin (Filière Tubulaire) :** 
+    - **Lopin (Filière Tubulaire) :**
     470 - 510°C
-    """
     """)
     st.warning("⚠️ Tolérance : +/- 10°C")
 
