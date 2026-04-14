@@ -102,6 +102,18 @@ with st.sidebar:
     """)
     st.warning("⚠️ Tolérance : +/- 10°C")
 
+col_logo, col_titre = st.columns([1, 4])
+with col_logo:
+    st.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6q1BtDSDgVnJZFo0hOBfQJoDS6OYiub-qfQ&s", width=150)
+
+with col_titre:
+    # Petit espacement pour centrer verticalement avec le logo
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+    st.markdown("<h2 style='margin: 0;'>Tunisie Profilés d'Aluminium</h2>", unsafe_allow_html=True)
+    st.markdown("<h4 style='margin: 0; color: #555;'>Direction Maintenance et Travaux Neufs</h4>", unsafe_allow_html=True)
+
+st.markdown("<hr style='margin: 1.5rem 0;'>", unsafe_allow_html=True)
+
 # --- CONTENU PRINCIPAL ---
 st.title("📝 Suivi Arrêts Production : Problème Chapeaux")
 
