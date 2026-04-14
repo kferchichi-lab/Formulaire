@@ -6,26 +6,89 @@ st.set_page_config(page_title="Suivi Arrêts TPR", page_icon="📝", layout="wid
 # --- STYLE CSS ---
 st.markdown("""
     <style>
-        .stMetric { background-color: #ffffff; padding: 10px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .temp-header { color: #0047AB; font-weight: bold; border-bottom: 2px solid #0047AB; margin-bottom: 10px; }
-        .stButton > button {
-            width: 100%; background: linear-gradient(135deg, #0047AB 0%, #00264d 100%);
-            color: white !important; font-weight: bold; border-radius: 8px; height: 3em;
+        /* On rend le header système visible pour la flèche mobile */
+        header {
+            visibility: visible !important;
+            height: 60px !important;
+        }
+        
+        /* --- CONFIGURATION PC (Par défaut) --- */
+        .block-container {
+            padding-top: 5rem !important; /* On augmente ici pour éviter le crop PC */
+            padding-bottom: 2rem !important;
+            padding-left: 5rem !important;
+            padding-right: 5rem !important;
+        }
+
+        /* --- CONFIGURATION SMARTPHONE --- */
+        @media (max-width: 768px) {
+            .block-container {
+                padding-top: 3.5rem !important; /* Un peu moins pour mobile pour garder votre 'très bon' rendu */
+                padding-left: 1.5rem !important;
+                padding-right: 1.5rem !important;
+            }
+            
+            [data-testid="stImage"] {
+                margin-top: 10px !important;
+            }
+        }
+
+        /* Sécurité pour l'image (Logo) */
+        [data-testid="stImage"] img {
+            max-width: 100%;
+            height: auto;
+            object-fit: contain !important;
+        }
+       /* Style des barres de visualisation */
+        .container-barre { width: 100%; background-color: #e0e0e0; border-radius: 5px; height: 20px; position: relative;}
+        .barre-lopin { background-color: #808080; height: 100%; border-radius: 5px; transition: width 0.5s;}
+        .barre-limite { background-color: #1a4332; height: 8px; border-radius: 5px; margin-top: 4px;}
+        
+       /* --- BOUTON CALCULER PREMIUM --- */
+        div.stButton > button {
+            width: 100%; 
+            height: 3.8em;
+            border-radius: 12px;
+            border: none;
+            
+            /* Dégradé de bleu professionnel */
+            background: linear-gradient(135deg, #0047AB 0%, #00264d 100%);
+            color: white !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.5px;
+            
+            /* Ombre portée pour le relief */
+            box-shadow: 0 4px 15px rgba(0, 71, 171, 0.3);
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+        }
+
+        /* --- EFFET AU SURVOL (HOVER) --- */
+        div.stButton > button:hover {
+            background: linear-gradient(135deg, #0056d6 0%, #0047AB 100%) !important;
+            color: white !important;
+            box-shadow: 0 6px 20px rgba(0, 71, 171, 0.5) !important;
+            transform: translateY(-2px); /* Le bouton remonte légèrement */
+            border: none !important;
+        }
+
+        /* --- EFFET AU CLIC (ACTIVE) --- */
+        div.stButton > button:active {
+            transform: translateY(1px) scale(0.98);
+            box-shadow: 0 2px 10px rgba(0, 71, 171, 0.2) !important;
         }
     </style>
     """, unsafe_allow_html=True)
-
-# --- CONFIGURATION DES PRESSES ---
 CONFIG_PRESSES = {
-    "Presse 4": {"diametre": 228},
-    "Presse 6": {"diametre": 178},
-    "Presse 7": {"diametre": 178},
+    "Presse 4": {"diametre": 228, "limite_longueur": 1150},
+    "Presse 6": {"diametre": 178, "limite_longueur": 890},
+    "Presse 7": {"diametre": 178, "limite_longueur": 1000},
 }
 
 # --- SIDEBAR : CHOIX ET RAPPELS ---
 with st.sidebar:
-    st.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6q1BtDSDgVnJZFo0hOBfQJoDS6OYiub-qfQ&s", width=100)
-    st.header("⚙️ Configuration")
+    st.header("⚙️ Configuration Machine")
     presse_choisie = st.selectbox("SÉLECTIONNER LA PRESSE :", options=list(CONFIG_PRESSES.keys()), index=None, placeholder="Choisir...")
     
     st.divider()
