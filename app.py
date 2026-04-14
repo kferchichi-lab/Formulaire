@@ -144,7 +144,7 @@ with st.form("form_diagnostic", clear_on_submit=True):
 
     commentaire = st.text_area("Observations / Détails de l'incident")
     
-    submitted = st.button("ENREGISTRER L'INCIDENT")
+    submitted = st.form_submit_button("ENREGISTRER L'INCIDENT")
 
 # --- VALIDATION ---
 if submitted:
