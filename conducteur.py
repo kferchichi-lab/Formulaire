@@ -262,10 +262,7 @@ with tab_stats:
     fig2.update_layout(xaxis_tickangle=0)
     
     st.plotly_chart(fig2, use_container_width=True)
-    
-
-        df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)]
-        
+            
         # Calcul de la somme des minutes par cause
         # On groupe par 'Cause' et on additionne 'Duree_Min'
         tableau_somme = df_filtered.groupby('Cause')['Duree_Min'].sum().reset_index()
