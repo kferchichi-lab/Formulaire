@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
+import plotly.express as px  # Pour les graphiques
+from io import BytesIO      # Pour l'export Excel
 
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Suivi Arrêts TPR", page_icon="📝", layout="wide")
@@ -70,7 +72,7 @@ with col_titre:
     st.markdown("#### Direction Maintenance et Travaux Neufs")
 st.divider()
 # --- NAVIGATION PAR ONGLETS ---
-tab_saisie, tab_base = st.tabs(["➕ Nouvelle Saisie", "📊 Consulter la Base de Données"])
+tab_saisie, tab_base, tab_stats= st.tabs(["➕ Nouvelle Saisie", "📊 Consulter la Base de Données", "📈 Analyse Graphique"])
 
 # --- ONGLET 1 : FORMULAIRE DE SAISIE ---
 with tab_saisie:
@@ -148,6 +150,32 @@ with tab_base:
             file_name=f"base_arrets_TPR_{datetime.now().strftime('%d_%m_%Y')}.csv",
             mime="text/csv",
         )
+        # --- ONGLET 3 : ANALYSE GRAPHIQUE ---
+with tab_stats:
+    if os.path.isfile(DB_FILE):
+        df_stats = pd.read_csv(DB_FILE, sep=";")
+        st.subheader("Analyse des causes par Presse")
+        
+        # Sélecteur pour le graphique
+        presse_filtre = st.multiselect("Sélectionner les presses à analyser :", options=df_stats["Presse"].unique(), default=df_stats["Presse"].unique())
+        
+        if presse_filtre:
+            df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)]
+            
+            # Création du graphique en cercle (Pie Chart)
+            # On groupe par 'Cause' et on compte les occurrences
+            fig = px.pie(df_filtered, names='Cause', title=f"Répartition des causes - {', '.join(presse_filtre)}",
+                         hole=0.4, # Pour en faire un Donut chart (plus moderne)
+                         color_discrete_sequence=px.colors.qualitative.Pastel)
+            
+            fig.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Optionnel : Répartition du temps d'arrêt
+            st.divider()
+            st.subheader("Total des minutes d'arrêt par cause")
+            fig2 = px.bar(df_filtered, x='Cause', y='Duree_Min', color='Presse', barmode='group', title="Durée totale des arrêts par cause (min)")
+            st.plotly_chart(fig2, use_container_width=True)
     else:
         st.info("Aucune donnée n'a encore été enregistrée.")
 # --- FOOTER ---
