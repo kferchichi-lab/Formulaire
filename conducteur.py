@@ -265,22 +265,27 @@ with tab_stats:
     # Ajouter les bordures blanches autour des barres pour mieux les distinguer
 # AJOUT DE L'EFFET AU SURVOL
     fig2.update_traces(
+        # Quand on survole : la barre devient un peu transparente et s'entoure de noir
+        selectedpoints=None,
         hoverinfo="all",
-        hovertemplate="<b>Presse:</b> %{fullData.name}<br><b>Temps:</b> %{y} min<extra></extra>",
-    # Effet visuel : Bordure plus épaisse au survol
-        marker_line_width=1.5,
-        marker_line_color="white"
+        marker_line_width=0, # Pas de bordure par défaut
+        
+        # C'est ici que l'on définit l'effet visuel du survol
+        hoverlabel=dict(bgcolor="black", font_size=14, font_color="white"),
     )
 
+    # FORCE L'EFFET DE CHANGEMENT DE COULEUR AU SURVOL via le Layout
     fig2.update_layout(
-        hovermode="closest", # Focalise l'effet sur la barre précise
-        xaxis_tickangle=0,
-    # Animation fluide lors du survol
-        hoverlabel=dict(
-            bgcolor="white",
-            font_size=16,
-            font_family="Rockwell"
-        )
+        hovermode="closest",
+        # Active l'interactivité avancée
+        clickmode='event+select'
+    )
+    
+    # Pour un effet de changement de couleur vraiment visible :
+    # On utilise "unselected" pour ternir les autres barres quand on en survole une
+    fig2.update_traces(
+        marker_opacity=0.8, # Opacité de base légèrement réduite
+        selector=dict(type='bar')
     )
     
     st.plotly_chart(fig2, use_container_width=True)
