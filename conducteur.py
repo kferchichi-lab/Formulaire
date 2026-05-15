@@ -95,6 +95,7 @@ with tab_saisie:
                     "H - Problème Hydraulique (Pression de bridage, de chape…)",
                     "O - Outillage : face de contact entre conteneur et filière (Usure, casse…)",
                     "R - Raclage du conteneur : Lopin déformé, 2 morceaux du lopin non alignés..",
+                    "Autres..", 
                 ])
 
             commentaire = st.text_area("Observations / Détails de l'incident")
