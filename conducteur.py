@@ -255,9 +255,25 @@ with tab_stats:
         barmode='group',
         title="Durée totale des arrêts par code de cause (min)",
         labels={'Code_Cause': 'Cause (Code)', 'Duree_Min': 'Minutes'},
-        color_discrete_sequence=px.colors.qualitative.Set1
+       color_discrete_sequence=px.colors.qualitative.Bold,
+        text_auto=True # Affiche les chiffres automatiquement sur les segments
     )
 
+    # Réglages pour afficher le total au-dessus de la barre empilée
+    fig2.update_layout(
+        xaxis_tickangle=0,
+        uniformtext_minsize=8, 
+        uniformtext_mode='hide',
+        xaxis={'categoryorder':'total descending'} # Trie les causes de la plus grave à la moins grave
+    )
+    
+    st.plotly_chart(fig2, use_container_width=True)
+    
+    # Petit tableau récapitulatif pour plus de précision
+    st.markdown("### 📋 Résumé des pertes par cause")
+    resume = df_temp.groupby('Cause')['Duree_Min'].sum().sort_values(ascending=False).reset_index()
+    resume.columns = ['Nature de la Cause', 'Total Minutes']
+    st.table(resume)
     # On force l'affichage des codes sans inclinaison
     fig2.update_layout(xaxis_tickangle=0)
     
