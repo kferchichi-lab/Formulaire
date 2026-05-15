@@ -264,7 +264,7 @@ with tab_stats:
     st.plotly_chart(fig2, use_container_width=True)
     
     # Petit rappel des codes en dessous pour l'utilisateur
-    st.info("**Rappel des codes :** **T** : Température | **H** : Hydraulique | **O** : Outillage | **R** : Raclage")
+    st.info("**Rappel des codes :** **T** : Problème de température | **H** : Problème hydraulique | **O** : Outillage | **R** : Raclage du conteneur")
          
    
 # --- FOOTER ---
