@@ -122,52 +122,36 @@ with tab_saisie:
                     st.success(f"✅ Incident enregistré pour la {presse_choisie}")
 
 # --- ONGLET 2 : CONSULTATION DE LA BASE ---
-# --- ONGLET 2 : CONSULTATION & GESTION ---
 with tab_base:
-    st.subheader("📊 Base de Données & Correction")
-    
+    st.subheader("📊 Historique Global des Arrêts")
     if os.path.isfile(DB_FILE):
-        # Charger les données
-        df = pd.read_csv(DB_FILE, sep=";")
+        df_affichage = pd.read_csv(DB_FILE, sep=";")
         
-        # 1. Utilisation de data_editor pour permettre la suppression
-        # num_rows="dynamic" permet d'ajouter/supprimer des lignes
-        st.write("💡 *Pour supprimer : cochez la case à gauche de la ligne et appuyez sur la touche 'Suppr' ou cliquez sur l'icône poubelle.*")
+        # Filtres interactifs
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            filtre_presse = st.multiselect("Filtrer par Presse :", options=df_affichage["Presse"].unique())
+        with col_f2:
+            filtre_cause = st.multiselect("Filtrer par Cause :", options=df_affichage["Cause"].unique())
         
-        edited_df = st.data_editor(
-            df, 
-            use_container_width=True, 
-            num_rows="dynamic",  # Active l'ajout/suppression de lignes
-            key="data_editor_key"
-        )
+        if filtre_presse:
+            df_affichage = df_affichage[df_affichage["Presse"].isin(filtre_presse)]
+        if filtre_cause:
+            df_affichage = df_affichage[df_affichage["Cause"].isin(filtre_cause)]
+            
+        # Affichage du tableau (Le Grand Tableau)
+        st.dataframe(df_affichage, use_container_width=True)
         
-        # 2. Bouton pour confirmer les modifications (Suppression ou modification)
-        if st.button("💾 ENREGISTRER LES MODIFICATIONS (SUPPRESSION)"):
-            try:
-                # On réenregistre tout le dataframe modifié dans le fichier CSV
-                edited_df.to_csv(DB_FILE, index=False, sep=";", encoding="utf-8-sig")
-                st.success("✅ La base de données a été mise à jour avec succès !")
-                st.rerun() # Rafraîchit la page pour voir les changements
-            except Exception as e:
-                st.error(f"Erreur lors de l'enregistrement : {e}")
-
-        st.divider()
-
-        # --- EXPORT EXCEL ---
-        def to_excel(df_to_export):
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                df_to_export.to_excel(writer, index=False, sheet_name='Arrêts')
-            return output.getvalue()
-
+        # Bouton d'export Excel
+        csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
         st.download_button(
-            label="📥 Télécharger la base actuelle en EXCEL",
-            data=to_excel(edited_df),
-            file_name=f"arrets_TPR_maj_{datetime.now().strftime('%d_%m_%Y')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            label="📥 Télécharger la base complète pour Excel",
+            data=csv,
+            file_name=f"base_arrets_TPR_{datetime.now().strftime('%d_%m_%Y')}.csv",
+            mime="text/csv",
         )
     else:
-        st.info("Aucune donnée enregistrée.")
+        st.info("Aucune donnée n'a encore été enregistrée.")
 # --- ONGLET 3 : ANALYSE GRAPHIQUE ---
 with tab_stats:
     if os.path.isfile(DB_FILE):
