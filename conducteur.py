@@ -100,7 +100,45 @@ with tab_saisie:
 
             commentaire = st.text_area("Observations / Détails de l'incident")
             submitted = st.form_submit_button("ENREGISTRER L'INCIDENT")
+st.markdown("""
+    <style>
+        header { visibility: visible !important; height: 60px !important; }
+        .block-container { padding-top: 2rem !important; }
+        .temp-header { color: #0047AB; font-weight: bold; margin-bottom: 5px; }
+        
+        /* Cible TOUS les types de boutons : Standard, Téléchargement et Formulaire */
+        div.stButton > button, 
+        div.stDownloadButton > button, 
+        div.stFormSubmitButton > button {
+            width: 100% !important; 
+            height: 3.5em !important; 
+            border-radius: 12px !important; 
+            border: none !important;
+            background: linear-gradient(135deg, #0047AB 0%, #00264d 100%) !important;
+            color: white !important; 
+            font-size: 16px !important; 
+            font-weight: 600 !important;
+            box-shadow: 0 4px 15px rgba(0, 71, 171, 0.3) !important;
+            transition: all 0.3s ease !important;
+        }
 
+        /* Effet au survol pour tous les boutons */
+        div.stButton > button:hover, 
+        div.stDownloadButton > button:hover, 
+        div.stFormSubmitButton > button:hover {
+            transform: translateY(-3px) !important;
+            box-shadow: 0 8px 25px rgba(0, 71, 171, 0.5) !important;
+            background: linear-gradient(135deg, #0056cc 0%, #003366 100%) !important;
+        }
+
+        /* Forcer la couleur du texte à l'intérieur des balises <p> de Streamlit */
+        div.stButton > button p, 
+        div.stDownloadButton > button p, 
+        div.stFormSubmitButton > button p {
+            color: white !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
             if submitted:
                 if not ref_filiere or not num_lopin:
                     st.error("Veuillez remplir les champs obligatoires (Filière et Lopin).")
@@ -119,8 +157,7 @@ with tab_saisie:
                     }
                     sauvegarder_donnees(nouvelle_entree)
                     st.success(f"✅ Incident enregistré pour la {presse_choisie}")
-                    st.snow()
-
+                  
 # --- ONGLET 2 : CONSULTATION DE LA BASE ---
 with tab_base:
     st.subheader("📊 Historique Global des Arrêts")
