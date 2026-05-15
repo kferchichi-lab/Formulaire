@@ -265,17 +265,21 @@ with tab_stats:
             
         # Calcul de la somme des minutes par cause
         # On groupe par 'Cause' et on additionne 'Duree_Min'
-    tableau_somme = df_filtered.groupby('Cause')['Duree_Min'].sum().reset_index()
-        
-        # Tri du tableau pour avoir les causes les plus critiques en haut
-    tableau_somme = tableau_somme.sort_values(by='Duree_Min', ascending=False)
-        
-        # Renommer les colonnes pour une meilleure présentation
-    tableau_somme.columns = ['Nature de la Cause', 'Temps Total (Minutes)']
-        
-        # Affichage du tableau stylisé
-    st.table(tableau_somme)
-        
+    # --- EXTRACTION DU CODE ---
+            # On crée une nouvelle colonne 'Code' en prenant le 1er caractère
+            df_filtered['Code'] = df_filtered['Cause'].str[0]
+            
+            # Groupement par Code
+            tableau_somme = df_filtered.groupby('Code')['Duree_Min'].sum().reset_index()
+            
+            # Tri par durée décroissante
+            tableau_somme = tableau_somme.sort_values(by='Duree_Min', ascending=False)
+            
+            # Renommer pour l'affichage
+            tableau_somme.columns = ['Code Cause', 'Temps Total (Minutes)']
+            
+            # Affichage du tableau (hide_index=True pour enlever les chiffres 0, 1, 2 à gauche)
+            st.table(tableau_somme)        
         # Petit indicateur visuel pour le total général
     total_general = tableau_somme['Temps Total (Minutes)'].sum()
     st.metric("TOTAL GÉNÉRAL DES ARRÊTS", f"{total_general} min")
