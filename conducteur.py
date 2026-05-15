@@ -285,7 +285,7 @@ with tab_stats:
             
             # Tri par durée décroissante
     tableau_somme = tableau_somme.sort_values(by='Duree_Min', ascending=False)
-    tableau_somme['Duree_Min'] = tableau_somme['Duree_Min'].astype(int)
+
         
     total_general = int(tableau_somme['Duree_Min'].sum())
             # Renommer pour l'affichage
