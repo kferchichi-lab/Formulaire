@@ -263,16 +263,7 @@ with tab_stats:
     
     st.plotly_chart(fig2, use_container_width=True)
     
- if os.path.isfile(DB_FILE):
-    df_stats = pd.read_csv(DB_FILE, sep=";")
-    st.subheader("📋 Récapitulatif des temps d'arrêt par cause")
-    
-    # Sélecteur pour filtrer les presses si besoin
-    presse_filtre = st.multiselect("Filtrer par presse (optionnel) :", 
-                                    options=df_stats["Presse"].unique(), 
-                                    default=df_stats["Presse"].unique())
-    
-    if presse_filtre:
+
         df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)]
         
         # Calcul de la somme des minutes par cause
