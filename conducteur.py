@@ -284,9 +284,9 @@ with tab_stats:
         # Petit indicateur visuel pour le total général
     total_general = tableau_somme['Temps Total (Minutes)'].sum()
    
-    col_gauche, col_milieu, col_droite = st.columns([5, 2, 2])
+    col_gauche, col_milieu, col_droite = st.columns([0, 2, 2])
 
-    with col_gauche:
+    with col_milieu:
         # Le tableau sans index et avec une largeur fixe
         st.dataframe(
             tableau_somme, 
