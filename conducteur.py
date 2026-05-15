@@ -239,12 +239,12 @@ with tab_stats:
         total_general = tableau_somme['Temps Total (Minutes)'].sum()
         st.metric("TOTAL GÉNÉRAL DES ARRÊTS", f"{total_general} min")
 
-            fig.update_layout(
+        fig.update_layout(
     # Effet de transition fluide
                 transition_duration=500,
                 showlegend=True
-            )
-            st.plotly_chart(fig, use_container_width=True)
+        )
+        st.plotly_chart(fig, use_container_width=True)
             
             # Optionnel : Répartition du temps d'arrêt
             # Création d'une copie pour ne pas modifier la base de données réelle
