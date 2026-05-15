@@ -291,40 +291,71 @@ with tab_stats:
     total_general = tableau_somme['Temps Total (Minutes)'].sum()
    
     col_vide, col_tab, col_espace, col_metrique = st.columns([1, 2, 0.5, 2])
-
     with col_tab:
-        st.dataframe(
-            tableau_somme, 
-            use_container_width=True, 
-            hide_index=True,
-            # Configuration pour centrer le contenu
-            column_config={
-                "Code Cause": st.column_config.TextColumn(
-                    "Code Cause",
-                    help="Code abrégé de l'incident",
-                    validate="^.$",
-                    width="medium",
-                ),
-                "Temps Total (Minutes)": st.column_config.NumberColumn(
-                    "Temps Total (Minutes)",
-                    format="%d",
-                    width="medium",
-                )
-            }
-        )
+    html_table = f"""
+    <style>
+        .custom-table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background-color: white;
+        }}
+        .custom-table th {{
+            background-color: #f8f9fb;
+            color: #0047AB;
+            text-align: center !important;
+            padding: 12px;
+            border-bottom: 2px solid #0047AB;
+            font-weight: bold;
+        }}
+        .custom-table td {{
+            text-align: center !important;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+            transition: all 0.2s ease; /* Transition douce pour l'effet */
+        }}
         
-        # Astuce CSS spécifique pour forcer l'alignement central des cellules
-        st.markdown("""
-            <style>
-                [data-testid="stTable"] td, [data-testid="stTable"] th {
-                    text-align: center !important;
-                }
-                /* Pour st.dataframe, on utilise le paramètre de config mais ce CSS aide pour le reste */
-                .stDataFrame div[data-testid="stHorizontalBlock"] {
-                    align-items: center;
-                }
-            </style>
-            """, unsafe_allow_html=True)
+        /* --- EFFET SPECIAL AU SURVOL --- */
+        .custom-table tr:hover td {{
+            background-color: #eef4ff !important; /* Bleu très clair au survol */
+            color: #0047AB !important;           /* Le texte devient bleu foncé */
+            cursor: pointer;                      /* Change le curseur en main */
+            font-weight: bold;                    /* Met le texte en gras pour accentuer */
+        }}
+        
+        /* Supprime la bordure pour la dernière ligne */
+        .custom-table tr:last-child td {{
+            border-bottom: none;
+        }}
+    </style>
+    
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th>Code Cause</th>
+                <th>Temps (Min)</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
+    
+    for _, row in tableau_somme.iterrows():
+        html_table += f"""
+            <tr>
+                <td>{row['Code Cause']}</td>
+                <td>{row['Temps Total (Minutes)']}</td>
+            </tr>
+        """
+    
+    html_table += "</tbody></table>"
+    
+    st.markdown(html_table, unsafe_allow_html=True)
+
+
 
     with col_metrique:
         st.markdown("<br><br>", unsafe_allow_html=True)
