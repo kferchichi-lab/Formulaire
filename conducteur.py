@@ -182,35 +182,23 @@ with tab_base:
     st.subheader("📊 Historique Global des Arrêts")
     if os.path.isfile(DB_FILE):
         df_affichage = pd.read_csv(DB_FILE, sep=";")
-        
-        # --- MODIFICATIONS ICI ---
-        # 1. Conversion de la colonne Date pour ne garder que le jour/mois/année
-        # On utilise errors='coerce' pour éviter les plantages si une cellule est vide
-        df_affichage['Date'] = pd.to_datetime(df_affichage['Date'], errors='coerce').dt.strftime('%d/%m/%Y')
-        
-        # 2. On définit les colonnes à afficher (on ne met pas 'Duree_Min' dans la liste)
-        # On vérifie que les colonnes existent bien pour éviter les erreurs
-        colonnes_visibles = ['Date', 'Presse', 'Poste', 'Filiere', 'Lopin', 'Cause']
-        df_pour_affichage = df_affichage[[c for c in colonnes_visibles if c in df_affichage.columns]]
-        # --------------------------
-
-        # Filtres interactifs (on utilise df_affichage pour les options car il contient tout)
+       
+        # Filtres interactifs
         col_f1, col_f2 = st.columns(2)
         with col_f1:
             filtre_presse = st.multiselect("Filtrer par Presse :", options=df_affichage["Presse"].unique())
         with col_f2:
             filtre_cause = st.multiselect("Filtrer par Cause :", options=df_affichage["Cause"].unique())
         
-        # Application des filtres sur le dataframe d'affichage
         if filtre_presse:
-            df_pour_affichage = df_pour_affichage[df_pour_affichage["Presse"].isin(filtre_presse)]
+            df_affichage = df_affichage[df_affichage["Presse"].isin(filtre_presse)]
         if filtre_cause:
-            df_pour_affichage = df_pour_affichage[df_pour_affichage["Cause"].isin(filtre_cause)]
+            df_affichage = df_affichage[df_affichage["Cause"].isin(filtre_cause)]
             
-        # Affichage du tableau (Le Grand Tableau) sans l'index (les numéros à gauche)
-        st.dataframe(df_pour_affichage, use_container_width=True, hide_index=True)
+        # Affichage du tableau (Le Grand Tableau)
+        st.dataframe(df_affichage, use_container_width=True)
         
-        # Bouton d'export Excel (on garde toutes les données dans l'export, même la durée)
+        # Bouton d'export Excel
         csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
         st.download_button(
             label="📥 Télécharger la base complète pour Excel",
