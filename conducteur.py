@@ -73,7 +73,7 @@ with col_titre:
 st.divider()
 
 # --- NAVIGATION PAR ONGLETS ---
-tab_saisie, tab_base = st.tabs(["➕ Nouvelle Saisie", "📊 Consulter la Base de Données", "📈 Analyse Graphique"])
+tab_saisie, tab_base, tab_stats = st.tabs(["➕ Nouvelle Saisie", "📊 Consulter la Base de Données", "📈 Analyse Graphique"])
 
 # --- ONGLET 1 : FORMULAIRE DE SAISIE ---
 with tab_saisie:
