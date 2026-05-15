@@ -283,7 +283,7 @@ with tab_stats:
       
         # Petit indicateur visuel pour le total général
     total_general = tableau_somme['Temps Total (Minutes)'].sum()
-    st.metric("TOTAL GÉNÉRAL DES ARRÊTS", f"{total_general} min")
+   
     col_gauche, col_milieu, col_droite = st.columns([1.5, 2, 2])
 
     with col_milieu:
