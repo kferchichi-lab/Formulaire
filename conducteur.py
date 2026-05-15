@@ -218,7 +218,7 @@ with tab_stats:
         presse_filtre = st.multiselect("Sélectionner les presses à analyser :", options=df_stats["Presse"].unique(), default=df_stats["Presse"].unique())
         
         if presse_filtre:
-            df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)]
+            df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)].copy()
             
             # Création du graphique en cercle (Pie Chart)
             # On groupe par 'Cause' et on compte les occurrences
@@ -285,7 +285,9 @@ with tab_stats:
             
             # Tri par durée décroissante
     tableau_somme = tableau_somme.sort_values(by='Duree_Min', ascending=False)
-            
+    tableau_somme['Duree_Min'] = tableau_somme['Duree_Min'].astype(int)
+        
+    total_general = int(tableau_somme['Duree_Min'].sum())
             # Renommer pour l'affichage
     tableau_somme.columns = ['Code Cause', 'Temps Total (Minutes)']
 
