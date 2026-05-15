@@ -266,10 +266,7 @@ with tab_stats:
     # Petit rappel des codes en dessous pour l'utilisateur
     st.info("**Rappel des codes :** **T** : Température | **H** : Hydraulique | **O** : Outillage | **R** : Raclage")
          
-    else:
-        st.info("Enregistrez des données pour voir les graphiques.")
-
-
+   
 # --- FOOTER ---
 st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
 st.markdown(
