@@ -265,19 +265,19 @@ with tab_stats:
     # Ajouter les bordures blanches autour des barres pour mieux les distinguer
 # AJOUT DE L'EFFET AU SURVOL
     fig.update_traces(
-    textinfo='percent',
+        textinfo='percent',
     # Effet : La part s'agrandit légèrement au survol (pull)
-    hoverinfo='label+percent+value',
-    marker=dict(line=dict(color='#000000', width=0)), # Pas de ligne par défaut
+        hoverinfo='label+percent+value',
+        marker=dict(line=dict(color='#000000', width=0)), # Pas de ligne par défaut
     # On définit l'apparence de la part "active"
-    insidetextorientation='horizontal'
-)
+        insidetextorientation='horizontal'
+    )
 
-fig.update_layout(
+    fig.update_layout(
     # Effet de transition fluide
-    transition_duration=500,
-    showlegend=True
-)
+        transition_duration=500,
+        showlegend=True
+    )
     
     st.plotly_chart(fig2, use_container_width=True)
             
