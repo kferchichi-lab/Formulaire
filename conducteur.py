@@ -263,7 +263,34 @@ with tab_stats:
     
     st.plotly_chart(fig2, use_container_width=True)
     
-    # Petit rappel des codes en dessous pour l'utilisateur
+ if os.path.isfile(DB_FILE):
+    df_stats = pd.read_csv(DB_FILE, sep=";")
+    st.subheader("📋 Récapitulatif des temps d'arrêt par cause")
+    
+    # Sélecteur pour filtrer les presses si besoin
+    presse_filtre = st.multiselect("Filtrer par presse (optionnel) :", 
+                                    options=df_stats["Presse"].unique(), 
+                                    default=df_stats["Presse"].unique())
+    
+    if presse_filtre:
+        df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)]
+        
+        # Calcul de la somme des minutes par cause
+        # On groupe par 'Cause' et on additionne 'Duree_Min'
+        tableau_somme = df_filtered.groupby('Cause')['Duree_Min'].sum().reset_index()
+        
+        # Tri du tableau pour avoir les causes les plus critiques en haut
+        tableau_somme = tableau_somme.sort_values(by='Duree_Min', ascending=False)
+        
+        # Renommer les colonnes pour une meilleure présentation
+        tableau_somme.columns = ['Nature de la Cause', 'Temps Total (Minutes)']
+        
+        # Affichage du tableau stylisé
+        st.table(tableau_somme)
+        
+        # Petit indicateur visuel pour le total général
+        total_general = tableau_somme['Temps Total (Minutes)'].sum()
+        st.metric("TOTAL GÉNÉRAL DES ARRÊTS", f"{total_general} min")
     
     # Petit rappel des codes en dessous pour l'utilisateur
     st.info("**Rappel des codes :** **T** : Problème de température | **H** : Problème hydraulique | **O** : Outillage | **R** : Raclage du conteneur")
