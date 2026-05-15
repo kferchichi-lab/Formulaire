@@ -139,7 +139,7 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
-            if submitted:
+                if submitted:
                 if not ref_filiere or not num_lopin:
                     st.error("Veuillez remplir les champs obligatoires (Filière et Lopin).")
                 else:
