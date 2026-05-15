@@ -287,39 +287,57 @@ with tab_stats:
     col_vide, col_tab, col_espace, col_metrique = st.columns([1, 2, 0.5, 2])
 
     with col_tab:
-        st.dataframe(
-            tableau_somme, 
-            use_container_width=True, 
-            hide_index=True,
-            # Configuration pour centrer le contenu
-            column_config={
-                "Code Cause": st.column_config.TextColumn(
-                    "Code Cause",
-                    help="Code abrégé de l'incident",
-                    validate="^.$",
-                    width="medium",
-                ),
-                "Temps Total (Minutes)": st.column_config.NumberColumn(
-                    "Temps Total (Minutes)",
-                    format="%d",
-                    width="medium",
-                )
-            }
-        )
-        
-        # Astuce CSS spécifique pour forcer l'alignement central des cellules
-        st.markdown("""
-            <style>
-                [data-testid="stTable"] td, [data-testid="stTable"] th {
-                    text-align: center !important;
-                }
-                /* Pour st.dataframe, on utilise le paramètre de config mais ce CSS aide pour le reste */
-                .stDataFrame div[data-testid="stHorizontalBlock"] {
-                    align-items: center;
-                }
-            </style>
-            """, unsafe_allow_html=True)
-
+    # On crée le tableau en HTML avec du style CSS
+    html_table = f"""
+    <style>
+        .custom-table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-family: sans-serif;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }}
+        .custom-table th {{
+            background-color: #f0f2f6;
+            color: #31333F;
+            text-align: center !important;
+            padding: 10px;
+            border-bottom: 2px solid #dee2e6;
+        }}
+        .custom-table td {{
+            text-align: center !important;
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+            color: #31333F;
+        }}
+        .custom-table tr:hover {{
+            background-color: #f8f9fa;
+        }}
+    </style>
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th>Code Cause</th>
+                <th>Temps (Min)</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
+    
+    # On ajoute les lignes dynamiquement
+    for _, row in tableau_somme.iterrows():
+        html_table += f"""
+            <tr>
+                <td>{row['Code Cause']}</td>
+                <td>{row['Temps Total (Minutes)']}</td>
+            </tr>
+        """
+    
+    html_table += "</tbody></table>"
+    
+    # Affichage du tableau HTML
+    st.markdown(html_table, unsafe_allow_html=True)
     with col_metrique:
         st.markdown("<br><br>", unsafe_allow_html=True)
         st.metric(label="TOTAL GÉNÉRAL DES ARRÊTS", value=f"{total_general} min")
