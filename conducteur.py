@@ -264,24 +264,24 @@ with tab_stats:
 
     # Ajouter les bordures blanches autour des barres pour mieux les distinguer
 # AJOUT DE L'EFFET AU SURVOL
-fig2.update_traces(
-    hoverinfo="all",
-    hovertemplate="<b>Presse:</b> %{fullData.name}<br><b>Temps:</b> %{y} min<extra></extra>",
+    fig2.update_traces(
+        hoverinfo="all",
+        hovertemplate="<b>Presse:</b> %{fullData.name}<br><b>Temps:</b> %{y} min<extra></extra>",
     # Effet visuel : Bordure plus épaisse au survol
-    marker_line_width=1.5,
-    marker_line_color="white"
-)
-
-fig2.update_layout(
-    hovermode="closest", # Focalise l'effet sur la barre précise
-    xaxis_tickangle=0,
-    # Animation fluide lors du survol
-    hoverlabel=dict(
-        bgcolor="white",
-        font_size=16,
-        font_family="Rockwell"
+        marker_line_width=1.5,
+        marker_line_color="white"
     )
-)
+
+    fig2.update_layout(
+        hovermode="closest", # Focalise l'effet sur la barre précise
+        xaxis_tickangle=0,
+    # Animation fluide lors du survol
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=16,
+            font_family="Rockwell"
+        )
+    )
     
     st.plotly_chart(fig2, use_container_width=True)
             
