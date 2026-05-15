@@ -291,6 +291,7 @@ with tab_stats:
     total_general = tableau_somme['Temps Total (Minutes)'].sum()
    
     col_vide, col_tab, col_espace, col_metrique = st.columns([1, 2, 0.5, 2])
+    
     with col_tab:
     html_table = f"""
     <style>
