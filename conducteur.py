@@ -291,7 +291,7 @@ with tab_stats:
     st.metric("TOTAL GÉNÉRAL DES ARRÊTS", f"{total_general} min")
     
     # Petit rappel des codes en dessous pour l'utilisateur
-    st.info("**Rappel des codes :** **T** : Problème de température | **H** : Problème hydraulique | **O** : Outillage | **R** : Raclage du conteneur")
+    st.info("**Rappel des codes :** **T** : Problème de température | **H** : Problème hydraulique | **O** : Outillage | **R** : Raclage du conteneur | **A** : Autres")
          
    
 # --- FOOTER ---
