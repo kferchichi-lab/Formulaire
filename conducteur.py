@@ -288,8 +288,8 @@ with tab_stats:
 
     with col_tab:
     # On crée le tableau en HTML avec du style CSS
-    html_table = f"""
-    <style>
+        html_table = f"""
+        <style>
         .custom-table {{
             width: 100%;
             border-collapse: collapse;
