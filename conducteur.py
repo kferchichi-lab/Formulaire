@@ -239,6 +239,32 @@ with tab_stats:
             st.plotly_chart(fig, use_container_width=True)
             
             # Optionnel : Répartition du temps d'arrêt
+            # Création d'une copie pour ne pas modifier la base de données réelle
+    df_temp = df_filtered.copy()
+    
+    # On extrait juste la première lettre (le Code : T, H, O, R) pour l'affichage
+    df_temp['Code_Cause'] = df_temp['Cause'].str[0] 
+
+    st.subheader("Total des minutes d'arrêt par cause")
+    
+    fig2 = px.bar(
+        df_temp, 
+        x='Code_Cause', # On utilise le code court ici
+        y='Duree_Min', 
+        color='Presse', 
+        barmode='group',
+        title="Durée totale des arrêts par code de cause (min)",
+        labels={'Code_Cause': 'Cause (Code)', 'Duree_Min': 'Minutes'},
+        color_discrete_sequence=px.colors.qualitative.Set1
+    )
+
+    # On force l'affichage des codes sans inclinaison
+    fig2.update_layout(xaxis_tickangle=0)
+    
+    st.plotly_chart(fig2, use_container_width=True)
+    
+    # Petit rappel des codes en dessous pour l'utilisateur
+    st.info("**Rappel des codes :** **T** : Température | **H** : Hydraulique | **O** : Outillage | **R** : Raclage")
             st.divider()
             st.subheader("Total des minutes d'arrêt par cause")
             fig2 = px.bar(df_filtered, x='Cause', y='Duree_Min', color='Presse', barmode='group', title="Durée totale des arrêts par cause (min)")
