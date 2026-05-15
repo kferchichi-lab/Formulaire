@@ -182,7 +182,9 @@ with tab_base:
     st.subheader("📊 Historique Global des Arrêts")
     if os.path.isfile(DB_FILE):
         df_affichage = pd.read_csv(DB_FILE, sep=";")
-        
+        df_display['Date'] = pd.to_datetime(df_display['Date']).dt.strftime('%d/%m/%Y')
+        colonnes_a_garder = ['Date', 'Presse', 'Poste', 'Filiere', 'Lopin', 'Cause']
+        df_final = df_display[colonnes_a_garder]
         # Filtres interactifs
         col_f1, col_f2 = st.columns(2)
         with col_f1:
