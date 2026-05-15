@@ -299,64 +299,41 @@ with tab_stats:
    
     col_vide, col_tab, col_espace, col_metrique = st.columns([1, 2, 0.5, 2])
     
-    with col_tab:
-    # 1. Sécurité : On force les durées en nombres réels (mathématiques)
-    # Cela évite que "10" + "20" devienne "1020"
-        tableau_somme['Duree_Min'] = pd.to_numeric(tableau_somme['Duree_Min']).astype(int)
+   col_vide, col_tab, col_espace, col_metrique = st.columns([1, 2, 0.5, 2])
 
-    # 2. Début du HTML
-        html_table = f"""
-        <style>
-        .custom-table {{
-            width: 100%;
-            border-collapse: collapse;
-            font-family: sans-serif;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }}
-        .custom-table th {{
-            background-color: #f8f9fb;
-            color: #0047AB;
-            text-align: center !important;
-            padding: 12px;
-            border-bottom: 2px solid #0047AB;
-        }}
-        .custom-table td {{
-            text-align: center !important;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            transition: all 0.2s;
-        }}
-        .custom-table tr:hover td {{
-            background-color: #eef4ff !important;
-            font-weight: bold;
-        }}
-    </style>
-    <table class="custom-table">
-        <thead>
-            <tr>
-                <th>Code Cause</th>
-                <th>Temps (Min)</th>
-            </tr>
-        </thead>
-        <tbody>
-    """
-    
-    # 3. Ajout des lignes (On s'assure que les valeurs sont bien traitées comme des nombres)
-    for _, row in tableau_somme.iterrows():
-        valeur_num = int(row['Duree_Min']) # Force le type entier ici aussi
-        html_table += f"""
-            <tr>
-                <td>{row['Code']}</td>
-                <td>{valeur_num}</td>
-            </tr>
-        """
-    
-    html_table += "</tbody></table>"
-    
-    # 4. Affichage
-    st.markdown(html_table, unsafe_allow_html=True)
+    with col_tab:
+        st.dataframe(
+            tableau_somme, 
+            use_container_width=True, 
+            hide_index=True,
+            # Configuration pour centrer le contenu
+            column_config={
+                "Code Cause": st.column_config.TextColumn(
+                    "Code Cause",
+                    help="Code abrégé de l'incident",
+                    validate="^.$",
+                    width="medium",
+                ),
+                "Temps Total (Minutes)": st.column_config.NumberColumn(
+                    "Temps Total (Minutes)",
+                    format="%d",
+                    width="medium",
+                )
+            }
+        )
+        
+        # Astuce CSS spécifique pour forcer l'alignement central des cellules
+        st.markdown("""
+            <style>
+                [data-testid="stTable"] td, [data-testid="stTable"] th {
+                    text-align: center !important;
+                }
+                /* Pour st.dataframe, on utilise le paramètre de config mais ce CSS aide pour le reste */
+                .stDataFrame div[data-testid="stHorizontalBlock"] {
+                    align-items: center;
+                }
+            </style>
+            """, unsafe_allow_html=True)
 
     with col_metrique:
         st.markdown("<br><br>", unsafe_allow_html=True)
