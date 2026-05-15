@@ -265,13 +265,13 @@ with tab_stats:
             
         # Calcul de la somme des minutes par cause
         # On groupe par 'Cause' et on additionne 'Duree_Min'
-        tableau_somme = df_filtered.groupby('Cause')['Duree_Min'].sum().reset_index()
+    tableau_somme = df_filtered.groupby('Cause')['Duree_Min'].sum().reset_index()
         
         # Tri du tableau pour avoir les causes les plus critiques en haut
-        tableau_somme = tableau_somme.sort_values(by='Duree_Min', ascending=False)
+    tableau_somme = tableau_somme.sort_values(by='Duree_Min', ascending=False)
         
         # Renommer les colonnes pour une meilleure présentation
-        tableau_somme.columns = ['Nature de la Cause', 'Temps Total (Minutes)']
+    tableau_somme.columns = ['Nature de la Cause', 'Temps Total (Minutes)']
         
         # Affichage du tableau stylisé
         st.table(tableau_somme)
