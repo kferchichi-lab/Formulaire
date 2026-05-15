@@ -290,14 +290,39 @@ with tab_stats:
         st.dataframe(
             tableau_somme, 
             use_container_width=True, 
-            hide_index=True
+            hide_index=True,
+            # Configuration pour centrer le contenu
+            column_config={
+                "Code Cause": st.column_config.TextColumn(
+                    "Code Cause",
+                    help="Code abrégé de l'incident",
+                    validate="^.$",
+                    width="medium",
+                ),
+                "Temps Total (Minutes)": st.column_config.NumberColumn(
+                    "Temps Total (Minutes)",
+                    format="%d",
+                    width="medium",
+                )
+            }
         )
+        
+        # Astuce CSS spécifique pour forcer l'alignement central des cellules
+        st.markdown("""
+            <style>
+                [data-testid="stTable"] td, [data-testid="stTable"] th {
+                    text-align: center !important;
+                }
+                /* Pour st.dataframe, on utilise le paramètre de config mais ce CSS aide pour le reste */
+                .stDataFrame div[data-testid="stHorizontalBlock"] {
+                    align-items: center;
+                }
+            </style>
+            """, unsafe_allow_html=True)
 
     with col_metrique:
-        # On ajoute des espaces verticaux pour centrer le total face au tableau
         st.markdown("<br><br>", unsafe_allow_html=True)
         st.metric(label="TOTAL GÉNÉRAL DES ARRÊTS", value=f"{total_general} min")
-    # Petit rappel des codes en dessous pour l'utilisateur
     st.info("**Rappel des codes :** **T** : Problème de température | **H** : Problème hydraulique | **O** : Outillage | **R** : Raclage du conteneur | **A** : Autres")
          
    
