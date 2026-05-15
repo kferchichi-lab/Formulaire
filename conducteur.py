@@ -145,10 +145,10 @@ with tab_base:
         # Bouton d'export Excel
         csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
         st.download_button(
-            label="📥 Télécharger la base complète pour Excel",
-            data=csv,
-            file_name=f"base_arrets_TPR_{datetime.now().strftime('%d_%m_%Y')}.csv",
-            mime="text/csv",
+            label="📥 TÉLÉCHARGER LA BASE EXCEL (.xlsx)",
+            data=to_excel(edited_df),
+            file_name=f"base_TPR_{datetime.now().strftime('%d_%m_%Y')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
         # --- ONGLET 3 : ANALYSE GRAPHIQUE ---
 with tab_stats:
