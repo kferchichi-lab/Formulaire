@@ -166,7 +166,6 @@ with tab_saisie:
                     # Préparation de la ligne de données
                     nouvelle_entree = {
                         "Date": date_j.strftime("%d/%m/%Y"),
-                        "Heure_Saisie": datetime.now().strftime("%H:%M:%S"),
                         "Presse": presse_choisie,
                         "Poste": poste,
                         "Filiere": ref_filiere,
