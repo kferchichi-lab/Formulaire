@@ -289,7 +289,20 @@ with tab_stats:
         # Petit indicateur visuel pour le total général
     total_general = tableau_somme['Temps Total (Minutes)'].sum()
     st.metric("TOTAL GÉNÉRAL DES ARRÊTS", f"{total_general} min")
-    
+    col_gauche, col_milieu, col_droite = st.columns([1.5, 2, 2])
+
+    with col_milieu:
+        # Le tableau sans index et avec une largeur fixe
+        st.dataframe(
+            tableau_somme, 
+            use_container_width=True, 
+            hide_index=True
+        )
+
+    with col_droite:
+        # Affichage du total juste à côté avec un peu d'espace en haut
+        st.markdown("<br>", unsafe_allow_html=True) # Saut de ligne pour aligner
+        st.metric(label="TOTAL GÉNÉRAL DES ARRÊTS", value=f"{total_general} min")
     # Petit rappel des codes en dessous pour l'utilisateur
     st.info("**Rappel des codes :** **T** : Problème de température | **H** : Problème hydraulique | **O** : Outillage | **R** : Raclage du conteneur | **A** : Autres")
          
