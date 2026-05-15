@@ -284,7 +284,7 @@ with tab_stats:
         # Petit indicateur visuel pour le total général
     total_general = tableau_somme['Temps Total (Minutes)'].sum()
    
-    col_vide, col_tab, col_espace, col_metrique = st.columns([1, 1, 0.5, 2])
+    col_vide, col_tab, col_espace, col_metrique = st.columns([1, 2, 0.5, 2])
 
     with col_tab:
         st.dataframe(
