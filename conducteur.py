@@ -215,25 +215,29 @@ with tab_stats:
         st.subheader("Analyse des causes par Presse")
         
         # Sélecteur pour le graphique
-        presse_filtre = st.multiselect("Sélectionner les presses à analyser :", options=df_stats["Presse"].unique(), default=df_stats["Presse"].unique())
+        presse_filtre = st.multiselect("Filtrer par presse (optionnel) :", 
+                                    options=df_stats["Presse"].unique(), 
+                                    default=df_stats["Presse"].unique())
+    
+    if presse_filtre:
+        df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)]
         
-        if presse_filtre:
-            df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)].copy()
-            
-            # Création du graphique en cercle (Pie Chart)
-            # On groupe par 'Cause' et on compte les occurrences
-            fig = px.pie(df_filtered, names='Cause', title=f"Répartition des causes - {', '.join(presse_filtre)}",
-                         hole=0.4, # Pour en faire un Donut chart (plus moderne)
-                         color_discrete_sequence=px.colors.qualitative.Pastel)
-            
-            fig.update_traces(
-                textinfo='percent',
-    # Effet : La part s'agrandit légèrement au survol (pull)
-                hoverinfo='label+percent+value',
-                marker=dict(line=dict(color='#000000', width=0)), # Pas de ligne par défaut
-    # On définit l'apparence de la part "active"
-                insidetextorientation='horizontal'
-            )
+        # Calcul de la somme des minutes par cause
+        # On groupe par 'Cause' et on additionne 'Duree_Min'
+        tableau_somme = df_filtered.groupby('Cause')['Duree_Min'].sum().reset_index()
+        
+        # Tri du tableau pour avoir les causes les plus critiques en haut
+        tableau_somme = tableau_somme.sort_values(by='Duree_Min', ascending=False)
+        
+        # Renommer les colonnes pour une meilleure présentation
+        tableau_somme.columns = ['Nature de la Cause', 'Temps Total (Minutes)']
+        
+        # Affichage du tableau stylisé
+        st.table(tableau_somme)
+        
+        # Petit indicateur visuel pour le total général
+        total_general = tableau_somme['Temps Total (Minutes)'].sum()
+        st.metric("TOTAL GÉNÉRAL DES ARRÊTS", f"{total_general} min")
 
             fig.update_layout(
     # Effet de transition fluide
