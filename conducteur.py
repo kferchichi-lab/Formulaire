@@ -302,11 +302,11 @@ with tab_stats:
     with col_tab:
     # 1. Sécurité : On force les durées en nombres réels (mathématiques)
     # Cela évite que "10" + "20" devienne "1020"
-    tableau_somme['Duree_Min'] = pd.to_numeric(tableau_somme['Duree_Min']).astype(int)
+        tableau_somme['Duree_Min'] = pd.to_numeric(tableau_somme['Duree_Min']).astype(int)
 
     # 2. Début du HTML
-    html_table = f"""
-    <style>
+        html_table = f"""
+        <style>
         .custom-table {{
             width: 100%;
             border-collapse: collapse;
