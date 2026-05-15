@@ -274,11 +274,11 @@ with tab_stats:
     tableau_somme.columns = ['Nature de la Cause', 'Temps Total (Minutes)']
         
         # Affichage du tableau stylisé
-        st.table(tableau_somme)
+    st.table(tableau_somme)
         
         # Petit indicateur visuel pour le total général
-        total_general = tableau_somme['Temps Total (Minutes)'].sum()
-        st.metric("TOTAL GÉNÉRAL DES ARRÊTS", f"{total_general} min")
+    total_general = tableau_somme['Temps Total (Minutes)'].sum()
+    st.metric("TOTAL GÉNÉRAL DES ARRÊTS", f"{total_general} min")
     
     # Petit rappel des codes en dessous pour l'utilisateur
     st.info("**Rappel des codes :** **T** : Problème de température | **H** : Problème hydraulique | **O** : Outillage | **R** : Raclage du conteneur")
