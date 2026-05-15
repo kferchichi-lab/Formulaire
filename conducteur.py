@@ -227,19 +227,19 @@ with tab_stats:
                          color_discrete_sequence=px.colors.qualitative.Pastel)
             
             fig.update_traces(
-    textinfo='percent',
+                textinfo='percent',
     # Effet : La part s'agrandit légèrement au survol (pull)
-    hoverinfo='label+percent+value',
-    marker=dict(line=dict(color='#000000', width=0)), # Pas de ligne par défaut
+                hoverinfo='label+percent+value',
+                marker=dict(line=dict(color='#000000', width=0)), # Pas de ligne par défaut
     # On définit l'apparence de la part "active"
-    insidetextorientation='horizontal'
-)
+                insidetextorientation='horizontal'
+            )
 
-fig.update_layout(
+            fig.update_layout(
     # Effet de transition fluide
-    transition_duration=500,
-    showlegend=True
-)
+                transition_duration=500,
+                showlegend=True
+            )
             st.plotly_chart(fig, use_container_width=True)
             
             # Optionnel : Répartition du temps d'arrêt
