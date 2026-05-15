@@ -286,7 +286,7 @@ with tab_stats:
    
     col_gauche, col_milieu, col_droite = st.columns([1.5, 2, 2])
 
-    with col_milieu:
+    with col_gauche:
         # Le tableau sans index et avec une largeur fixe
         st.dataframe(
             tableau_somme, 
