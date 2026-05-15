@@ -24,6 +24,44 @@ st.markdown("""
         header { visibility: visible !important; height: 60px !important; }
         .block-container { padding-top: 2rem !important; }
         .temp-header { color: #0047AB; font-weight: bold; margin-bottom: 5px; }
+
+ /* On rend le header système visible pour la flèche mobile */
+        header {
+            visibility: visible !important;
+            height: 60px !important;
+        }
+        
+        /* --- CONFIGURATION PC (Par défaut) --- */
+        .block-container {
+            padding-top: 5rem !important; /* On augmente ici pour éviter le crop PC */
+            padding-bottom: 2rem !important;
+            padding-left: 5rem !important;
+            padding-right: 5rem !important;
+        }
+
+        /* --- CONFIGURATION SMARTPHONE --- */
+        @media (max-width: 768px) {
+            .block-container {
+                padding-top: 3.5rem !important; /* Un peu moins pour mobile pour garder votre 'très bon' rendu */
+                padding-left: 1.5rem !important;
+                padding-right: 1.5rem !important;
+            }
+            
+            [data-testid="stImage"] {
+                margin-top: 10px !important;
+            }
+        }
+
+        /* Sécurité pour l'image (Logo) */
+        [data-testid="stImage"] img {
+            max-width: 100%;
+            height: auto;
+            object-fit: contain !important;
+        }
+       /* Style des barres de visualisation */
+        .container-barre { width: 100%; background-color: #e0e0e0; border-radius: 5px; height: 20px; position: relative;}
+        .barre-lopin { background-color: #808080; height: 100%; border-radius: 5px; transition: width 0.5s;}
+        .barre-limite { background-color: #1a4332; height: 8px; border-radius: 5px; margin-top: 4px;}
         
         /* Cible TOUS les types de boutons : Standard, Téléchargement et Formulaire */
         div.stButton > button, 
