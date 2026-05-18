@@ -313,13 +313,19 @@ with tab_stats:
             tableau_somme.columns = ['Code Cause', 'Temps Total (Minutes)']
             
             # Affichage du tableau (hide_index=True pour enlever les chiffres 0, 1, 2 à gauche)
-            st.dataframe(
-                tableau_somme, 
-                use_container_width=False, 
-                hide_index=True,
-                width=400  # Vous pouvez ajuster cette valeur (en pixels) selon votre besoin
-            )
-            
+
+            col_vide, col_tab, col_espace, col_metrique = st.columns([1, 2, 0.5, 2])
+
+            with col_tab:
+                st.dataframe(
+                    tableau_somme, 
+                    use_container_width=False, 
+                    hide_index=True,
+                    width=400  # Vous pouvez ajuster cette valeur (en pixels) selon votre besoin
+                )
+
+            with col_metrique:
+            st.markdown("<br><br>", unsafe_allow_html=True)
             total_general = tableau_somme['Temps Total (Minutes)'].sum()
             st.metric("TOTAL GÉNÉRAL", f"{total_general} min")
     
