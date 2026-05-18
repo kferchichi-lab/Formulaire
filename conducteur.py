@@ -198,24 +198,24 @@ with tab_saisie:
         commentaire = st.text_area("Observations / Détails de l'incident")
         submitted = st.form_submit_button("ENREGISTRER L'INCIDENT")
 
-            if submitted:
-                if not ref_filiere or not num_lopin:
-                    st.error("Veuillez remplir les champs obligatoires (Filière et Lopin).")
-                else:
+        if submitted:
+            if not ref_filiere or not num_lopin:
+                st.error("Veuillez remplir les champs obligatoires (Filière et Lopin).")
+            else:
                     # Préparation de la ligne de données
-                    nouvelle_entree = {
-                        "Date": date_j.strftime("%d/%m/%Y"),
-                        "Heure_Saisie": datetime.now().strftime("%H:%M:%S"),
-                        "Presse": presse_choisie,
-                        "Poste": poste,
-                        "Filiere": ref_filiere,
-                        "Lopin": num_lopin,
-                        "Duree_Min": duree,
-                        "Cause": cause,
-                        "Observations": commentaire
-                    }
-                    sauvegarder_donnees(nouvelle_entree)
-                    st.success(f"✅ Incident enregistré pour la {presse_choisie}")
+                nouvelle_entree = {
+                "Date": date_j.strftime("%d/%m/%Y"),
+                "Heure_Saisie": datetime.now().strftime("%H:%M:%S"),
+                "Presse": presse_choisie,
+                "Poste": poste,
+                "Filiere": ref_filiere,
+                "Lopin": num_lopin,
+                "Duree_Min": duree,
+                "Cause": cause,
+                "Observations": commentaire
+                }
+            sauvegarder_donnees(nouvelle_entree)
+            st.success(f"✅ Incident enregistré pour la {presse_choisie}")
                  
 # --- ONGLET 2 : CONSULTATION DE LA BASE ---
 
