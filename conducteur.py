@@ -325,9 +325,9 @@ with tab_stats:
                 )
 
             with col_metrique:
-            st.markdown("<br><br>", unsafe_allow_html=True)
-            total_general = tableau_somme['Temps Total (Minutes)'].sum()
-            st.metric("TOTAL GÉNÉRAL", f"{total_general} min")
+                st.markdown("<br><br>", unsafe_allow_html=True)
+                total_general = tableau_somme['Temps Total (Minutes)'].sum()
+                st.metric("TOTAL GÉNÉRAL", f"{total_general} min")
     
     # Petit rappel des codes en dessous pour l'utilisateur
             st.info("**Rappel des codes :** **T** : Problème de Température | **H** : Problème Hydraulique | **O** : Outillage | **R** : Raclage | **A** : Autres..")
