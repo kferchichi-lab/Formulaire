@@ -195,8 +195,8 @@ with tab_saisie:
 # Exemple pour fusionner : 
         cause_finale = f"{cause_principale} : {raison_detaillee}"
 
-            commentaire = st.text_area("Observations / Détails de l'incident")
-            submitted = st.form_submit_button("ENREGISTRER L'INCIDENT")
+        commentaire = st.text_area("Observations / Détails de l'incident")
+        submitted = st.form_submit_button("ENREGISTRER L'INCIDENT")
 
             if submitted:
                 if not ref_filiere or not num_lopin:
