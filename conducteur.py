@@ -256,24 +256,22 @@ with tab_stats:
         df_stats = pd.read_csv(DB_FILE, sep=";")
         st.subheader("Analyse des causes par Presse")
         
-        # Sélecteur pour le graphique
         presse_filtre = st.multiselect("Sélectionner les presses à analyser :", options=df_stats["Presse"].unique(), default=df_stats["Presse"].unique())
         
         if presse_filtre:
             df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)]
             
-            # Création du graphique en cercle (Pie Chart)
-            # On groupe par 'Cause' et on compte les occurrences
+
             fig = px.pie(df_filtered, names='Cause', title=f"Répartition des causes - {', '.join(presse_filtre)}",
-                         hole=0.4, # Pour en faire un Donut chart (plus moderne)
+                         hole=0.4, 
                          color_discrete_sequence=px.colors.qualitative.Pastel)
             
             fig.update_traces(
                 textposition='inside', 
-                textinfo='percent'  # <--- On a supprimé '+label' pour n'avoir que le %
+                textinfo='percent'  
             )
     
-    # Ajustement de la légende pour qu'elle soit bien lisible à droite
+
             fig.update_layout(
                 legend=dict(
                     orientation="v",
@@ -285,12 +283,10 @@ with tab_stats:
             )
     
             st.plotly_chart(fig, use_container_width=True)
-            
-            # Optionnel : Répartition du temps d'arrêt
+
             st.divider()
             df_temp = df_filtered.copy()
     
-    # On extrait juste la première lettre (le Code : T, H, O, R) pour l'affichage
             df_temp['Code_Cause'] = df_temp['Cause'].str[0] 
 
             st.subheader("Total des minutes d'arrêt par cause")
