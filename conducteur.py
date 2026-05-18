@@ -291,9 +291,13 @@ with tab_stats:
                 barmode='group',
                 title="Durée totale des arrêts par code de cause (min)",
                 labels={'Code_Cause': 'Cause (Code)', 'Duree_Min': 'Minutes'},
-                color_discrete_sequence=px.colors.qualitative.Set1
+                color_discrete_map={ # Optionnel : fixer les couleurs pour plus de clarté
+                    "Presse 4": "#E63946", 
+                    "Presse 6": "#457B9D", 
+                    "Presse 7": "#2A9D8F"
+                }
             )
-
+            fig2.update_traces(marker_line_color='white', marker_line_width=1, opacity=0.9)
     # On force l'affichage des codes sans inclinaison
             fig2.update_layout(xaxis_tickangle=0)
     
