@@ -177,65 +177,42 @@ with tab_saisie:
 # --- ONGLET 2 : CONSULTATION DE LA BASE ---
 
 with tab_base:
-
     st.subheader("📊 Historique Global des Arrêts")
-
     if os.path.isfile(DB_FILE):
-
         df_affichage = pd.read_csv(DB_FILE, sep=";")
-
-        
-
+        df_affichage['Date'] = df_affichage['Date'].astype(str).str[:10]
+        colonnes_visibles = ['Date', 'Presse', 'Poste', 'Filiere', 'Lopin', 'Duree_Min', 'Cause']
+        df_pour_affichage = df_affichage[[c for c in colonnes_visibles if c in df_affichage.columns]]
+        # Sécurité : On force la colonne Duree_Min en numérique (évite le bug des gros chiffres)
+        df_affichage['Duree_Min'] = pd.to_numeric(df_affichage['Duree_Min'], errors='coerce').fillna(0).astype(int)
         # Filtres interactifs
-
         col_f1, col_f2 = st.columns(2)
-
         with col_f1:
-
             filtre_presse = st.multiselect("Filtrer par Presse :", options=df_affichage["Presse"].unique())
-
         with col_f2:
-
             filtre_cause = st.multiselect("Filtrer par Cause :", options=df_affichage["Cause"].unique())
-
-        
-
+       
         if filtre_presse:
-
             df_affichage = df_affichage[df_affichage["Presse"].isin(filtre_presse)]
-
         if filtre_cause:
-
             df_affichage = df_affichage[df_affichage["Cause"].isin(filtre_cause)]
-
-            
-
+           
         # Affichage du tableau (Le Grand Tableau)
-
-        st.dataframe(df_affichage, use_container_width=True)
-
+        df_pour_affichage.columns = ['Date', 'Presse', 'Poste', 'Filière', 'Lopin', 'Durée (Min)', 'Cause de l\'arrêt']
+            
+        # Affichage du tableau propre, sans index, sur toute la largeur
+        st.dataframe(df_pour_affichage, use_container_width=True, hide_index=True)
         
-
         # Bouton d'export Excel
-
         csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
-
         st.download_button(
-
             label="📥 Télécharger la base complète pour Excel",
-
             data=csv,
-
             file_name=f"base_arrets_TPR_{datetime.now().strftime('%d_%m_%Y')}.csv",
-
             mime="text/csv",
-
         )
-
     else:
-
         st.info("Aucune donnée n'a encore été enregistrée.")
-
 
 
 # --- ONGLET 3 : ANALYSE GRAPHIQUE ---
