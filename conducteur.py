@@ -61,17 +61,35 @@ st.markdown("""
             object-fit: contain !important;
         }
         
-        /* Bouton Enregistrer Premium */
-        div.stButton > button {
-            width: 100%; height: 3.5em; border-radius: 12px; border: none;
+/* Cible les boutons standards ET les boutons de téléchargement */
+        div.stButton > button, div.stDownloadButton > button {
+            width: 100%; 
+            height: 3.5em; 
+            border-radius: 12px; 
+            border: none;
             background: linear-gradient(135deg, #0047AB 0%, #00264d 100%);
-            color: white !important; font-size: 16px !important; font-weight: 600 !important;
+            color: white !important; 
+            font-size: 16px !important; 
+            font-weight: 600 !important;
             box-shadow: 0 4px 15px rgba(0, 71, 171, 0.3);
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        div.stButton > button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 71, 171, 0.5) !important;
+
+        /* Effet spécial au survol (Hover) */
+        div.stButton > button:hover, div.stDownloadButton > button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 71, 171, 0.5) !important;
+            background: linear-gradient(135deg, #0056cc 0%, #003366 100%);
+            color: #ffffff !important;
+        }
+        
+        /* Correction pour le texte du bouton de téléchargement */
+        div.stDownloadButton > button p {
+            color: white !important;
+            font-weight: 600 !important;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -178,11 +196,11 @@ with tab_base:
        
         # Bouton d'export Excel
         csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
-        st.download_button(
-            label="📥 Télécharger la base complète pour Excel",
-            data=csv,
-            file_name=f"base_arrets_TPR_{datetime.now().strftime('%d_%m_%Y')}.csv",
-            mime="text/csv",
+       st.download_button(
+            label="📥 TÉLÉCHARGER LA BASE EXCEL (.xlsx)",
+            data=to_excel(edited_df),
+            file_name=f"base_TPR_{datetime.now().strftime('%d_%m_%Y')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
     else:
         st.info("Aucune donnée n'a encore été enregistrée.")
