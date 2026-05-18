@@ -257,9 +257,9 @@ with tab_stats:
                          color_discrete_sequence=px.colors.qualitative.Pastel)
             
           fig.update_traces(
-        textposition='inside', 
-        textinfo='percent'  # <--- On a supprimé '+label' pour n'avoir que le %
-    )
+            textposition='inside', 
+            textinfo='percent'  # <--- On a supprimé '+label' pour n'avoir que le %
+            )
     
     # Ajustement de la légende pour qu'elle soit bien lisible à droite
     fig.update_layout(
