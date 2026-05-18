@@ -298,6 +298,25 @@ with tab_stats:
             fig2.update_layout(xaxis_tickangle=0)
     
             st.plotly_chart(fig2, use_container_width=True)
+
+            # --- EXTRACTION DU CODE ---
+            # On crée une nouvelle colonne 'Code' en prenant le 1er caractère
+            df_filtered['Code'] = df_filtered['Cause'].str[0]
+            
+            # Groupement par Code
+            tableau_somme = df_filtered.groupby('Code')['Duree_Min'].sum().reset_index()
+            
+            # Tri par durée décroissante
+            tableau_somme = tableau_somme.sort_values(by='Duree_Min', ascending=False)
+            
+            # Renommer pour l'affichage
+            tableau_somme.columns = ['Code Cause', 'Temps Total (Minutes)']
+            
+            # Affichage du tableau (hide_index=True pour enlever les chiffres 0, 1, 2 à gauche)
+            st.table(tableau_somme)
+            
+            total_general = tableau_somme['Temps Total (Minutes)'].sum()
+            st.metric("TOTAL GÉNÉRAL", f"{total_general} min")
     
     # Petit rappel des codes en dessous pour l'utilisateur
             st.info("**Rappel des codes :** **T** : Température | **H** : Hydraulique | **O** : Outillage | **R** : Raclage")
