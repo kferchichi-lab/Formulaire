@@ -275,10 +275,10 @@ with tab_stats:
     st.plotly_chart(fig, use_container_width=True)
             
             # Optionnel : Répartition du temps d'arrêt
-            st.divider()
-            st.subheader("Total des minutes d'arrêt par cause")
-            fig2 = px.bar(df_filtered, x='Cause', y='Duree_Min', color='Presse', barmode='group', title="Durée totale des arrêts par cause (min)")
-            st.plotly_chart(fig2, use_container_width=True)
+    st.divider()
+    st.subheader("Total des minutes d'arrêt par cause")
+    fig2 = px.bar(df_filtered, x='Cause', y='Duree_Min', color='Presse', barmode='group', title="Durée totale des arrêts par cause (min)")
+    st.plotly_chart(fig2, use_container_width=True)
     else:
         st.info("Enregistrez des données pour voir les graphiques.")
 
