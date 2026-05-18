@@ -196,7 +196,7 @@ with tab_base:
        
         # Bouton d'export Excel
         csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
-       st.download_button(
+        st.download_button(
             label="📥 TÉLÉCHARGER LA BASE EXCEL (.xlsx)",
             data=to_excel(edited_df),
             file_name=f"base_TPR_{datetime.now().strftime('%d_%m_%Y')}.xlsx",
