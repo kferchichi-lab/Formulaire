@@ -205,42 +205,7 @@ with tab_base:
         # Affichage du tableau propre, sans index, sur toute la largeur
         st.dataframe(df_pour_affichage, use_container_width=True, hide_index=True)
 
-        st.divider()
-        
-        # 2. ZONE DE SUPPRESSION SIMPLE
-        st.markdown("### 🗑️ Supprimer un enregistrement")
-        
-        if not df_filtre.empty:
-            # On crée une description claire pour chaque ligne afin que l'utilisateur ne se trompe pas
-            options_suppression = {}
-            for idx, row in df_filtre.iterrows():
-                # Exemple de texte : "Ligne 12 - 14/05/2026 - Presse 4 (R - Raclage...)"
-                texte_ligne = f"Ligne {idx} — {row['Date']} — {row['Presse']} — {str(row['Cause'])[:40]}..."
-                options_suppression[texte_ligne] = idx
-            
-            # Menu déroulant de sélection
-            ligne_A_supprimer = st.selectbox(
-                "Sélectionnez la ligne à supprimer définitivement :", 
-                options=list(options_suppression.keys())
-            )
-            
-            # Bouton de validation de suppression
-            if st.button("❌ Confirmer la suppression", type="primary"):
-                # On récupère le vrai index Pandas de la ligne à effacer
-                index_reel = options_suppression[ligne_A_supprimer]
-                
-                # On recharge la base brute depuis le fichier pour être sûr de ne rien décaler
-                df_db = pd.read_csv(DB_FILE, sep=";")
-                
-                # On supprime la ligne correspondante
-                df_db = df_db.drop(index_real)
-                
-                # Enregistrement immédiat dans le CSV
-                df_db.to_csv(DB_FILE, index=False, sep=";")
-                
-                st.success("Ligne supprimée avec succès ! Mise à jour de la base...")
-                st.rerun() # Rafraîchit l'application et les graphiques instantanément
-
+       
         # Bouton d'export Excel
         csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
         st.download_button(
