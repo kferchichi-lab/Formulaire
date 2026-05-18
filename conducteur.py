@@ -175,7 +175,7 @@ with tab_saisie:
             with col2:
                 num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12")
                 duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=1)
-                 cause = st.selectbox("Cause identifiée (Code)", [
+                cause = st.selectbox("Cause identifiée (Code)", [
                     "T - Problème de Température non homogène (Filière, conteneur, lopin)",
                     "H - Problème Hydraulique (Pression de bridage, de chape…)",
                     "O - Outillage : face de contact entre conteneur et filière (Usure, casse…)",
