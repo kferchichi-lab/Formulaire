@@ -319,7 +319,7 @@ with tab_stats:
             st.metric("TOTAL GÉNÉRAL", f"{total_general} min")
     
     # Petit rappel des codes en dessous pour l'utilisateur
-            st.info("**Rappel des codes :** **T** : Température | **H** : Hydraulique | **O** : Outillage | **R** : Raclage")
+            st.info("**Rappel des codes :** **T** : Problème de Température | **H** : Problème Hydraulique | **O** : Outillage | **R** : Raclage | **A** : Autres..")
     else:
         st.info("Enregistrez des données pour voir les graphiques.")
 
