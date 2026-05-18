@@ -176,9 +176,8 @@ with tab_saisie:
                  
 # --- ONGLET 2 : CONSULTATION DE LA BASE ---
 with tab_base:
-    st.subheader("📊 Historique Global des Arrêts")
     if os.path.isfile(DB_FILE):
-        df_affichage = pd.read_csv(DB_FILE, sep=";")
+        df = pd.read_csv(DB_FILE, sep=";")
         st.dataframe(df, use_container_width=True)
         
         # --- FONCTION EXPORT EXCEL ---
@@ -187,31 +186,28 @@ with tab_base:
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                 df.to_excel(writer, index=False, sheet_name='Arrêts')
             return output.getvalue()
-        # Filtres interactifs
-        col_f1, col_f2 = st.columns(2)
-        with col_f1:
-            filtre_presse = st.multiselect("Filtrer par Presse :", options=df_affichage["Presse"].unique())
-        with col_f2:
-            filtre_cause = st.multiselect("Filtrer par Cause :", options=df_affichage["Cause"].unique())
-      
-        if filtre_presse:
-            df_affichage = df_affichage[df_affichage["Presse"].isin(filtre_presse)]
-        if filtre_cause:
-            df_affichage = df_affichage[df_affichage["Cause"].isin(filtre_cause)]
-          
-        # Affichage du tableau (Le Grand Tableau)
-        st.dataframe(df_affichage, use_container_width=True)
-       
-        # Bouton d'export Excel
-        csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
-        st.download_button(
-            label="📥 TÉLÉCHARGER LA BASE EXCEL (.xlsx)",
-            data=to_excel(edited_df),
-            file_name=f"base_TPR_{datetime.now().strftime('%d_%m_%Y')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+
+        col_ex1, col_ex2 = st.columns(2)
+        with col_ex1:
+            st.download_button(label="📥 Télécharger EXCEL (.xlsx)", data=to_excel(df), file_name=f"arrets_TPR_{datetime.now().strftime('%d_%m_%Y')}.xlsx")
     else:
-        st.info("Aucune donnée n'a encore été enregistrée.")
+        st.info("Aucune donnée.")with tab_base:
+    if os.path.isfile(DB_FILE):
+        df = pd.read_csv(DB_FILE, sep=";")
+        st.dataframe(df, use_container_width=True)
+        
+        # --- FONCTION EXPORT EXCEL ---
+        def to_excel(df):
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                df.to_excel(writer, index=False, sheet_name='Arrêts')
+            return output.getvalue()
+
+        col_ex1, col_ex2 = st.columns(2)
+        with col_ex1:
+            st.download_button(label="📥 Télécharger EXCEL (.xlsx)", data=to_excel(df), file_name=f"arrets_TPR_{datetime.now().strftime('%d_%m_%Y')}.xlsx")
+    else:
+        st.info("Aucune donnée.")
 
 # --- ONGLET 3 : ANALYSE GRAPHIQUE ---
 with tab_stats:
