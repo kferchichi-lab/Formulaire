@@ -179,7 +179,14 @@ with tab_base:
     st.subheader("📊 Historique Global des Arrêts")
     if os.path.isfile(DB_FILE):
         df_affichage = pd.read_csv(DB_FILE, sep=";")
+        st.dataframe(df, use_container_width=True)
         
+        # --- FONCTION EXPORT EXCEL ---
+        def to_excel(df):
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                df.to_excel(writer, index=False, sheet_name='Arrêts')
+            return output.getvalue()
         # Filtres interactifs
         col_f1, col_f2 = st.columns(2)
         with col_f1:
