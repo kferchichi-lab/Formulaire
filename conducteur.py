@@ -181,6 +181,15 @@ with tab_base:
     if os.path.isfile(DB_FILE):
         df_affichage = pd.read_csv(DB_FILE, sep=";")
         df_affichage['Date'] = df_affichage['Date'].astype(str).str[:10]
+
+        edited_df = st.data_editor(
+            df, 
+            use_container_width=True, 
+            num_rows="dynamic",  # Active l'ajout/suppression de lignes
+            key="data_editor_key"
+        )
+
+        
         colonnes_visibles = ['Date', 'Presse', 'Poste', 'Filiere', 'Lopin', 'Duree_Min', 'Cause']
         df_pour_affichage = df_affichage[[c for c in colonnes_visibles if c in df_affichage.columns]]
         # Sécurité : On force la colonne Duree_Min en numérique (évite le bug des gros chiffres)
