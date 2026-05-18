@@ -5,6 +5,37 @@ from datetime import datetime
 import plotly.express as px  # Pour les graphiques
 from io import BytesIO      # Pour l'export Excel
 
+DICTIONNAIRE_CAUSES = {
+    "R - Raclage du conteneur": [
+        "Lopin déformé",
+        "2 morceaux du lopin non alignés",
+        "Conteneur encrassé",
+        "Autre problème de raclage"
+    ],
+    "O - Outillage": [
+        "Face de contact entre conteneur et filière",
+        "Usure prématurée",
+        "Casse outillage",
+        "Changement de filière programmé"
+    ],
+    "H - Problème Hydraulique": [
+        "Pression de bridage insuffisante",
+        "Pression de chape instable",
+        "Fuite d'huile vérin",
+        "Problème de pompe"
+    ],
+    "T - Problème de Température": [
+        "Température non homogène (Filière)",
+        "Surchauffe conteneur",
+        "Refroidissement lopin insuffisant"
+    ],
+    "Autres": [
+        "Attente matière",
+        "Pause opérateur",
+        "Panne électrique générale"
+    ]
+}
+
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Suivi Arrêts TPR", page_icon="📝", layout="wide")
 
