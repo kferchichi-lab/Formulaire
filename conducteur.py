@@ -39,10 +39,10 @@ DICTIONNAIRE_CAUSES = {
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Suivi Arrêts TPR", page_icon="📝", layout="wide")
 
-# --- FICHIER DE BASE DE DONNÉES ---
+
 DB_FILE = "base_donnees_chapeaux.csv"
 
-# Fonction pour sauvegarder les données dans le fichier CSV
+
 def sauvegarder_donnees(data):
     df = pd.DataFrame([data])
     if not os.path.isfile(DB_FILE):
@@ -132,7 +132,6 @@ CONFIG_PRESSES = {
     "Presse 7": {"diametre": 178},
 }
 
-# --- SIDEBAR : CHOIX ET RAPPELS ---
 with st.sidebar:
     st.header("⚙️ Configuration Machine")
     presse_choisie = st.selectbox("SÉLECTIONNER LA PRESSE :", options=list(CONFIG_PRESSES.keys()), index=None, placeholder="Choisir...")
@@ -147,7 +146,6 @@ with st.sidebar:
     """)
     st.warning("⚠️ Tolérance : +/- 10°C")
 
-# --- LOGOS ET TITRE ---
 col_logo, col_titre = st.columns([1, 5])
 with col_logo:
     st.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6q1BtDSDgVnJZFo0hOBfQJoDS6OYiub-qfQ&s", width=150)
@@ -156,10 +154,8 @@ with col_titre:
     st.markdown("#### Direction Maintenance et Travaux Neufs")
 st.divider()
 
-# --- NAVIGATION PAR ONGLETS ---
 tab_saisie, tab_base, tab_stats = st.tabs(["➕ Nouvelle Saisie", "📊 Consulter la Base de Données", "📈 Analyse Graphique"])
 
-# --- ONGLET 1 : FORMULAIRE DE SAISIE ---
 with tab_saisie:
     if not presse_choisie:
         st.info("👈 Veuillez sélectionner une presse dans le menu à gauche pour accéder au formulaire.")
@@ -191,7 +187,7 @@ with tab_saisie:
             if not ref_filiere or not num_lopin:
                 st.error("Veuillez remplir les champs obligatoires (Filière et Lopin).")
             else:
-                    # Préparation de la ligne de données
+                   
                 nouvelle_entree = {
                 "Date": date_j.strftime("%d/%m/%Y"),
                 "Heure_Saisie": datetime.now().strftime("%H:%M:%S"),
@@ -205,8 +201,6 @@ with tab_saisie:
                 }
             sauvegarder_donnees(nouvelle_entree)
             st.success(f"✅ Incident enregistré pour la {presse_choisie}")
-                 
-# --- ONGLET 2 : CONSULTATION DE LA BASE ---
 
 with tab_base:
     st.subheader("📊 Historique Global des Arrêts")
@@ -217,7 +211,7 @@ with tab_base:
         
         colonnes_visibles = ['Date', 'Presse', 'Poste', 'Filiere', 'Lopin', 'Duree_Min', 'Cause']
         df_pour_affichage = df_affichage[[c for c in colonnes_visibles if c in df_affichage.columns]]
-        # Sécurité : On force la colonne Duree_Min en numérique (évite le bug des gros chiffres)
+
         df_affichage['Duree_Min'] = pd.to_numeric(df_affichage['Duree_Min'], errors='coerce').fillna(0).astype(int)
         # Filtres interactifs
         col_f1, col_f2 = st.columns(2)
@@ -231,14 +225,10 @@ with tab_base:
         if filtre_cause:
             df_affichage = df_affichage[df_affichage["Cause"].isin(filtre_cause)]
            
-        # Affichage du tableau (Le Grand Tableau)
         df_pour_affichage.columns = ['Date', 'Presse', 'Poste', 'Filière', 'Lopin', 'Durée (Min)', 'Cause de l\'arrêt']
             
-        # Affichage du tableau propre, sans index, sur toute la largeur
         st.dataframe(df_pour_affichage, use_container_width=True, hide_index=True)
 
-       
-        # Bouton d'export Excel
         csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
         st.download_button(
             label="📥 Télécharger la base complète pour Excel",
@@ -249,8 +239,6 @@ with tab_base:
     else:
         st.info("Aucune donnée n'a encore été enregistrée.")
 
-
-# --- ONGLET 3 : ANALYSE GRAPHIQUE ---
 with tab_stats:
     if os.path.isfile(DB_FILE):
         df_stats = pd.read_csv(DB_FILE, sep=";")
@@ -293,39 +281,26 @@ with tab_stats:
     
             fig2 = px.bar(
                 df_temp, 
-                x='Code_Cause', # On utilise le code court ici
+                x='Code_Cause', 
                 y='Duree_Min', 
                 color='Presse', 
                 barmode='group',
                 title="Durée totale des arrêts par code de cause (min)",
                 labels={'Code_Cause': 'Cause (Code)', 'Duree_Min': 'Minutes'},
-                color_discrete_map={ # Optionnel : fixer les couleurs pour plus de clarté
+                color_discrete_map={ 
                     "Presse 4": "#E63946", 
                     "Presse 6": "#457B9D", 
                     "Presse 7": "#2A9D8F"
                 }
             )
             fig2.update_traces(marker_line_color='white', marker_line_width=1, opacity=0.9)
-    # On force l'affichage des codes sans inclinaison
-            fig2.update_layout(xaxis_tickangle=0)
-    
+            fig2.update_layout(xaxis_tickangle=0)    
             st.plotly_chart(fig2, use_container_width=True)
-
-            # --- EXTRACTION DU CODE ---
-            # On crée une nouvelle colonne 'Code' en prenant le 1er caractère
+    
             df_filtered['Code'] = df_filtered['Cause'].str[0]
-            
-            # Groupement par Code
             tableau_somme = df_filtered.groupby('Code')['Duree_Min'].sum().reset_index()
-            
-            # Tri par durée décroissante
-            tableau_somme = tableau_somme.sort_values(by='Duree_Min', ascending=False)
-            
-            # Renommer pour l'affichage
+            tableau_somme = tableau_somme.sort_values(by='Duree_Min', ascending=False)          
             tableau_somme.columns = ['Code Cause', 'Temps Total (Minutes)']
-            
-            # Affichage du tableau (hide_index=True pour enlever les chiffres 0, 1, 2 à gauche)
-
             col_vide, col_tab, col_espace, col_metrique = st.columns([1, 2, 0.5, 2])
 
             with col_tab:
@@ -333,7 +308,7 @@ with tab_stats:
                     tableau_somme, 
                     use_container_width=False, 
                     hide_index=True,
-                    width=400  # Vous pouvez ajuster cette valeur (en pixels) selon votre besoin
+                    width=400  
                 )
 
             with col_metrique:
@@ -341,12 +316,10 @@ with tab_stats:
                 total_general = tableau_somme['Temps Total (Minutes)'].sum()
                 st.metric("TOTAL GÉNÉRAL", f"{total_general} min")
     
-    # Petit rappel des codes en dessous pour l'utilisateur
             st.info("**Rappel des codes :** **T** : Problème de Température | **H** : Problème Hydraulique | **O** : Outillage | **R** : Raclage | **A** : Autres..")
     else:
         st.info("Enregistrez des données pour voir les graphiques.")
 
-# --- FOOTER ---
 st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
 st.markdown(
     f"""
