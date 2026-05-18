@@ -203,33 +203,45 @@ with tab_base:
         df_pour_affichage.columns = ['Date', 'Presse', 'Poste', 'Filière', 'Lopin', 'Durée (Min)', 'Cause de l\'arrêt']
             
         # Affichage du tableau propre, sans index, sur toute la largeur
-        edited_df = st.data_editor(
-            df_pour_affichage, 
-            use_container_width=True, 
-            hide_index=True,
-            num_rows="dynamic"  # Permet d'activer la suppression de lignes
-        )
+        st.dataframe(df_pour_affichage, use_container_width=True, hide_index=True)
+
+        st.divider()
         
-        # Vérification : si le nombre de lignes a diminué, on applique les changements dans le CSV
-        if len(edited_df) < len(df_pour_affichage):
-            # 1. On trouve les lignes qui ont été conservées grâce à une jointure ou index
-            # Pour faire simple et robuste, on reconstruit la base en supprimant ce qui manque
-            indices_conserves = edited_df.index
-            
-            # On récupère les vraies lignes d'origine filtrées correspondantes
-            df_filtre_mis_a_jour = df_filtre.iloc[indices_conserves]
-            
-            # On reprend les lignes non filtrées pour ne pas les perdre lors de la sauvegarde
-            df_non_filtre = df_affichage[~df_affichage.index.isin(df_filtre.index)]
-            
-            # On fusionne le tout pour reconstruire la base finale complète
-            df_final_sauvegarde = pd.concat([df_non_filtre, df_filtre_mis_a_jour]).sort_index()
-            
-            # Réalignement des noms de colonnes d'origine avant sauvegarde au cas où
-            df_final_sauvegarde.to_csv(DB_FILE, index=False, sep=";")
-            st.success("🔥 Ligne(s) supprimée(s) avec succès ! La base de données a été mise à jour.")
-            st.rerun() # Recharge la page pour actualiser les graphiques et tableaux instantanément
+        # 2. ZONE DE SUPPRESSION SIMPLE
+        st.markdown("### 🗑️ Supprimer un enregistrement")
         
+        if not df_filtre.empty:
+            # On crée une description claire pour chaque ligne afin que l'utilisateur ne se trompe pas
+            options_suppression = {}
+            for idx, row in df_filtre.iterrows():
+                # Exemple de texte : "Ligne 12 - 14/05/2026 - Presse 4 (R - Raclage...)"
+                texte_ligne = f"Ligne {idx} — {row['Date']} — {row['Presse']} — {str(row['Cause'])[:40]}..."
+                options_suppression[texte_ligne] = idx
+            
+            # Menu déroulant de sélection
+            ligne_A_supprimer = st.selectbox(
+                "Sélectionnez la ligne à supprimer définitivement :", 
+                options=list(options_suppression.keys())
+            )
+            
+            # Bouton de validation de suppression
+            if st.button("❌ Confirmer la suppression", type="primary"):
+                # On récupère le vrai index Pandas de la ligne à effacer
+                index_reel = options_suppression[ligne_A_supprimer]
+                
+                # On recharge la base brute depuis le fichier pour être sûr de ne rien décaler
+                df_db = pd.read_csv(DB_FILE, sep=";")
+                
+                # On supprime la ligne correspondante
+                df_db = df_db.drop(index_real)
+                
+                # Enregistrement immédiat dans le CSV
+                df_db.to_csv(DB_FILE, index=False, sep=";")
+                
+                st.success("Ligne supprimée avec succès ! Mise à jour de la base...")
+                st.rerun() # Rafraîchit l'application et les graphiques instantanément
+        else:
+
         # Bouton d'export Excel
         csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
         st.download_button(
