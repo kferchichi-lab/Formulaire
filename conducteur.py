@@ -61,37 +61,38 @@ st.markdown("""
             object-fit: contain !important;
         }
         
-/* Cible les boutons standards ET les boutons de téléchargement */
-        div.stButton > button, div.stDownloadButton > button {
-            width: 100%; 
-            height: 3.5em; 
-            border-radius: 12px; 
-            border: none;
-            background: linear-gradient(135deg, #0047AB 0%, #00264d 100%);
+/* Cible TOUS les types de boutons : Standard, Téléchargement et Formulaire */
+        div.stButton > button, 
+        div.stDownloadButton > button, 
+        div.stFormSubmitButton > button {
+            width: 100% !important; 
+            height: 3.5em !important; 
+            border-radius: 12px !important; 
+            border: none !important;
+            background: linear-gradient(135deg, #0047AB 0%, #00264d 100%) !important;
             color: white !important; 
             font-size: 16px !important; 
             font-weight: 600 !important;
-            box-shadow: 0 4px 15px rgba(0, 71, 171, 0.3);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 71, 171, 0.3) !important;
+            transition: all 0.3s ease !important;
         }
 
-        /* Effet spécial au survol (Hover) */
-        div.stButton > button:hover, div.stDownloadButton > button:hover {
-            transform: translateY(-3px);
+        /* Effet au survol pour tous les boutons */
+        div.stButton > button:hover, 
+        div.stDownloadButton > button:hover, 
+        div.stFormSubmitButton > button:hover {
+            transform: translateY(-3px) !important;
             box-shadow: 0 8px 25px rgba(0, 71, 171, 0.5) !important;
-            background: linear-gradient(135deg, #0056cc 0%, #003366 100%);
-            color: #ffffff !important;
+            background: linear-gradient(135deg, #0056cc 0%, #003366 100%) !important;
         }
-        
-        /* Correction pour le texte du bouton de téléchargement */
-        div.stDownloadButton > button p {
+
+        /* Forcer la couleur du texte à l'intérieur des balises <p> de Streamlit */
+        div.stButton > button p, 
+        div.stDownloadButton > button p, 
+        div.stFormSubmitButton > button p {
             color: white !important;
-            font-weight: 600 !important;
         }
-    </style>
+        </style>
     """, unsafe_allow_html=True)
 
 CONFIG_PRESSES = {
