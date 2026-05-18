@@ -240,7 +240,6 @@ with tab_base:
                 
                 st.success("Ligne supprimée avec succès ! Mise à jour de la base...")
                 st.rerun() # Rafraîchit l'application et les graphiques instantanément
-        else:
 
         # Bouton d'export Excel
         csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
