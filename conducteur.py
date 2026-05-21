@@ -8,6 +8,8 @@ import io
 import matplotlib.pyplot as plt
 # Assurez-vous d'avoir fpdf2 installé (ajoutez-le à votre fichier requirements.txt : fpdf2)
 from fpdf import FPDF
+from datetime import timedelta
+heure_locale = datetime.now() + timedelta(hours=1)
 
 DB_FILE = "base_donnees_chapeaux.csv"
 
