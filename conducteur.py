@@ -425,7 +425,7 @@ with tab_stats:
                     fig_pdf2, ax_pdf2 = plt.subplots(figsize=(7, 3.5))
                     df_bar_pdf.plot(kind='bar', ax=ax_pdf2, width=0.6, edgecolor='black', alpha=0.9)
                     
-                    ax_pdf2.set_ylabel("Minutes cumulées", fontsize=10)
+                    ax_pdf2.set_ylabel("Minutes", fontsize=10)
                     ax_pdf2.set_xlabel("Cause (Code)", fontsize=10)
                     ax_pdf2.set_title("Durée Totale des Arrêts par Code de Cause (min)", fontsize=12, fontweight='bold', pad=10)
                     plt.xticks(rotation=0)
@@ -446,7 +446,7 @@ with tab_stats:
                     
                     pdf.set_text_color(255, 255, 255)
                     pdf.set_font("Arial", 'B', 16)
-                    pdf.cell(0, 12, "RAPPORT ANALYTIQUE DES INCIDENTS", ln=True, align='C')
+                    pdf.cell(0, 12, "RAPPORT ANALYTIQUE DES INCIDENTS - CHAPEAUX", ln=True, align='C')
                     pdf.set_font("Arial", 'I', 10)
                     pdf.cell(0, 5, "Suivi de la Performance de Production & Maintenance - TPR", ln=True, align='C')
                     
@@ -476,7 +476,7 @@ with tab_stats:
                     
                     # Ajout Section 2 : Barres cumulées
                     pdf.set_font("Arial", 'B', 13)
-                    pdf.cell(0, 8, "2. Analyse Quantifiée des Temps d'Arrêt (Minutes)", ln=True)
+                    pdf.cell(0, 8, "2. Analyse Quantifiée des Temps d'Arrêt", ln=True)
                     pdf.ln(2)
                     pdf.image(img_buf2, x=20, w=170)
                     
@@ -484,8 +484,8 @@ with tab_stats:
                     pdf.set_y(-25)
                     pdf.set_font("Arial", 'I', 8)
                     pdf.set_text_color(120, 120, 120)
-                    pdf.cell(0, 5, "Rapport technique automatisé TPR - Généré en temps réel", 0, 1, 'C')
-                    pdf.cell(0, 5, "Direction Maintenance et Travaux Neufs - Confidentiel", 0, 0, 'C')
+                    pdf.cell(0, 5, "Rapport technique automatisé TPR", 0, 1, 'C')
+                    pdf.cell(0, 5, "Direction Maintenance et Travaux Neufs", 0, 1, 'C')
                     
                     # Envoi vers le bouton Streamlit
                     pdf_output = bytes(pdf.output())
