@@ -261,38 +261,53 @@ with tab_stats:
         presse_filtre = st.multiselect("Sélectionner les presses à analyser :", options=df_stats["Presse"].unique(), default=df_stats["Presse"].unique())
         
         if presse_filtre:
-            df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)]
+            df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)].copy()
             
-
-            fig = px.pie(
-                df_filtered, 
-                names='Cause_Generale', # <-- Utilisation de la colonne nettoyée
-                title=f"Répartition des causes - {', '.join(presse_filtre)}",
-                hole=0.4, 
-                color_discrete_sequence=px.colors.qualitative.Pastel
+            # --- NETTOYAGE SÉCURISÉ DES DONNÉES POUR PLOTLY ---
+            # 1. On s'assure que la colonne 'Cause' ne contient pas de valeurs nulles (NaN)
+            df_filtered['Cause'] = df_filtered['Cause'].fillna("A - Autres")
+            
+            # 2. On extrait la cause générale proprement
+            df_filtered['Cause_Generale'] = df_filtered['Cause'].apply(
+                lambda x: str(x).split(" :")[0] if " :" in str(x) else str(x)
             )
             
-            fig.update_traces(
-                textposition='inside', 
-                textinfo='percent'  
-            )
-    
-            fig.update_layout(
-                legend=dict(
-                    orientation="v",
-                    yanchor="middle",
-                    y=0.5,
-                    xanchor="left",
-                    x=1.05
+            # 3. SÉCURITÉ CRUCIALE : Si le DataFrame est vide après filtre, on évite de dessiner
+            if df_filtered.empty or df_filtered['Cause_Generale'].dropna().empty:
+                st.warning("⚠️ Aucune donnée valide trouvée pour les filtres sélectionnés.")
+            else:
+                # On utilise 'Cause_Generale' en toute sécurité
+                fig = px.pie(
+                    df_filtered, 
+                    names='Cause_Generale', 
+                    title=f"Répartition des causes - {', '.join(presse_filtre)}",
+                    hole=0.4, 
+                    color_discrete_sequence=px.colors.qualitative.Pastel
                 )
-            )
-    
-            st.plotly_chart(fig, use_container_width=True)
+                
+                fig.update_traces(
+                    textposition='inside', 
+                    textinfo='percent'  
+                )
+        
+                fig.update_layout(
+                    legend=dict(
+                        orientation="v",
+                        yanchor="middle",
+                        y=0.5,
+                        xanchor="left",
+                        x=1.05
+                    )
+                )
+        
+                st.plotly_chart(fig, use_container_width=True)
 
             st.divider()
+            
+            # --- POUR LE GRAPH EN BARRES (fig2) ---
+            # On applique la même sécurité pour 'Code_Cause' au cas où
             df_temp = df_filtered.copy()
-    
-            df_temp['Code_Cause'] = df_temp['Cause'].str[0] 
+            df_temp['Code_Cause'] = df_temp['Cause'].str[0].fillna("A")
 
             st.subheader("Total des minutes d'arrêt par cause")
     
