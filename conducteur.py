@@ -10,9 +10,9 @@ DB_FILE = "base_donnees_chapeaux.csv"
 
 DICTIONNAIRE_CODES = {
     "R": ["Lopin déformé", "2 morceaux du lopin non alignés", "Conteneur encrassé", "Autre problème de raclage"],
-    "O": ["Face de contact entre conteneur et filière", "Usure prématurée", "Casse outillage", "Changement de filière programmé"],
-    "H": ["Pression de bridage insuffisante", "Pression de chape instable", "Fuite d'huile vérin", "Problème de pompe"],
-    "T": ["Température non homogène (Filière)", "Surchauffe conteneur", "Refroidissement lopin insuffisant"],
+    "O": ["Face de contact entre conteneur et filière", "Usure prématurée du grain", "Casse outillage", "Mauvais centrage"],
+    "H": ["Pression de bridage insuffisante", "Pression de chape instable", "Fuite d'huile vérin", "Problème de pompe", "Pression d'extrusion instable"],
+    "T": ["Température non homogène du conteneur", "Température de filière inadéquate", "Refroidissement du lopin"],
     "A": ["Attente matière", "Pause opérateur", "Panne électrique générale"]
 }
 
