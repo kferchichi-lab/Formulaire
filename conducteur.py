@@ -264,16 +264,19 @@ with tab_stats:
             df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)]
             
 
-            fig = px.pie(df_filtered, names='Cause', title=f"Répartition des causes - {', '.join(presse_filtre)}",
-                         hole=0.4, 
-                         color_discrete_sequence=px.colors.qualitative.Pastel)
+            fig = px.pie(
+                df_filtered, 
+                names='Cause_Generale', # <-- Utilisation de la colonne nettoyée
+                title=f"Répartition des causes - {', '.join(presse_filtre)}",
+                hole=0.4, 
+                color_discrete_sequence=px.colors.qualitative.Pastel
+            )
             
             fig.update_traces(
                 textposition='inside', 
                 textinfo='percent'  
             )
     
-
             fig.update_layout(
                 legend=dict(
                     orientation="v",
