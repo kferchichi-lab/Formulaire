@@ -204,42 +204,72 @@ with tab_saisie:
 with tab_base:
     st.subheader("📊 Historique Global des Arrêts")
     if os.path.isfile(DB_FILE):
+        # 1. Chargement de la base
         df_affichage = pd.read_csv(DB_FILE, sep=";")
-        df_affichage['Date'] = df_affichage['Date'].astype(str).str[:10]
-
-        df_affichage['Cause_Propre'] = df_affichage['Cause'].fillna("A").apply(
-            lambda x: str(x).split(" :")[0] if " :" in str(x) else str(x)
-        )
         
-        # En option : On nettoie les doublons de texte bizarres s'il y en a dans l'historique
-        mapping_filtres = {
-            "R": "R - Raclage du conteneur",
-            "O": "O - Outillage",
-            "H": "H - Problème Hydraulique",
-            "T": "T - Problème de Température",
-            "A": "A - Autres"
-        }
-        df_affichage['Cause_Filtre_Standard'] = df_affichage['Cause_Propre'].str[0].str.upper().map(mapping_filtres).fillna("A - Autres")
-        colonnes_visibles = ['Date', 'Presse', 'Poste', 'Filiere', 'Lopin', 'Duree_Min', 'Cause']
-        df_pour_affichage = df_affichage[[c for c in colonnes_visibles if c in df_affichage.columns]]
+        # Sécurité : On s'assure que la colonne Cause existe et ne contient pas de lignes vides
+        if "Cause" in df_affichage.columns:
+            df_affichage['Cause'] = df_affichage['Cause'].fillna("A - Autres")
+            
+            # 2. CRÉATION D'UNE COLONNE DE RÉFÉRENCE PROPRE (Standardisation stricte)
+            mapping_filtres = {
+                "R": "R - Raclage du conteneur",
+                "O": "O - Outillage",
+                "H": "H - Problème Hydraulique",
+                "T": "T - Problème de Température",
+                "A": "A - Autres"
+            }
+            # On prend la première lettre, on la met en majuscule, et on applique le nom propre
+            df_affichage['Cause_Filtre_Standard'] = df_affichage['Cause'].str[0].str.upper().map(mapping_filtres).fillna("A - Autres")
+        else:
+            df_affichage['Cause'] = "A - Autres"
+            df_affichage['Cause_Filtre_Standard'] = "A - Autres"
 
-        df_affichage['Duree_Min'] = pd.to_numeric(df_affichage['Duree_Min'], errors='coerce').fillna(0).astype(int)
+        # Formatage de la date
+        if 'Date' in df_affichage.columns:
+            df_affichage['Date'] = df_affichage['Date'].astype(str).str[:10]
+        if 'Duree_Min' in df_affichage.columns:
+            df_affichage['Duree_Min'] = pd.to_numeric(df_affichage['Duree_Min'], errors='coerce').fillna(0).astype(int)
+
+        # 3. INTERFACE DES FILTRES
         col_f1, col_f2 = st.columns(2)
         with col_f1:
-            filtre_presse = st.multiselect("Filtrer par Presse :", options=df_affichage["Presse"].unique())
+            options_presse = df_affichage["Presse"].unique() if "Presse" in df_affichage.columns else []
+            filtre_presse = st.multiselect("Filtrer par Presse :", options=options_presse)
         with col_f2:
-            filtre_cause = st.multiselect("Filtrer par Cause :", options=df_affichage["Cause"].unique())
+            # Ici, on affiche UNIQUEMENT les 5 causes propres et uniques triées
+            options_cause = sorted(df_affichage["Cause_Filtre_Standard"].unique())
+            filtre_cause = st.multiselect("Filtrer par Cause :", options=options_cause)
        
+        # 4. APPLICATION APPRENDRE ET FILTRAGE DU DATAFRAME
+        df_filtre = df_affichage.copy()
+        
         if filtre_presse:
-            df_affichage = df_affichage[df_affichage["Presse"].isin(filtre_presse)]
+            df_filtre = df_filtre[df_filtre["Presse"].isin(filtre_presse)]
         if filtre_cause:
-            df_affichage = df_affichage[df_affichage["Cause"].isin(filtre_cause)]
+            # On applique le filtre sur notre colonne standardisée cachée
+            df_filtre = df_filtre[df_filtre["Cause_Filtre_Standard"].isin(filtre_cause)]
            
-        df_pour_affichage.columns = ['Date', 'Presse', 'Poste', 'Filière', 'Lopin', 'Durée (Min)', 'Cause de l\'arrêt']
+        # 5. SÉLECTION ET RENOMMAGE DES COLONNES POUR L'AFFICHAGE
+        colonnes_visibles = ['Date', 'Presse', 'Poste', 'Filiere', 'Lopin', 'Duree_Min', 'Cause']
+        # On ne garde que les colonnes existantes
+        colonnes_existantes = [c for c in colonnes_visibles if c in df_filtre.columns]
+        
+        df_pour_affichage = df_filtre[colonnes_existantes].copy()
+        
+        # Renommage propre pour le tableau final de l'utilisateur
+        traductions = {
+            'Date': 'Date', 'Presse': 'Presse', 'Poste': 'Poste', 
+            'Filiere': 'Filière', 'Lopin': 'Lopin', 
+            'Duree_Min': 'Durée (Min)', 'Cause': "Cause de l'arrêt"
+        }
+        df_pour_affichage.rename(columns=traductions, inplace=True)
             
+        # Affichage du tableau final filtré
         st.dataframe(df_pour_affichage, use_container_width=True, hide_index=True)
 
-        csv = df_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
+        # 6. BOUTON DE TÉLÉCHARGEMENT
+        csv = df_pour_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
         st.download_button(
             label="📥 Télécharger la base complète pour Excel",
             data=csv,
@@ -248,7 +278,6 @@ with tab_base:
         )
     else:
         st.info("Aucune donnée n'a encore été enregistrée.")
-
 with tab_stats:
     if os.path.isfile(DB_FILE):
         df_stats = pd.read_csv(DB_FILE, sep=";")
