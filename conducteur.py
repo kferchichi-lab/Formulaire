@@ -457,7 +457,7 @@ with tab_stats:
                     pdf.set_font("Arial", 'B', 11)
                     pdf.cell(40, 7, "Date de génération :", 0)
                     pdf.set_font("Arial", '', 11)
-                    pdf.cell(60, 7, datetime.now().strftime('%d/%m/%Y à %H:%M'), 0, True)
+                    pdf.cell(60, 7, heure_locale.strftime('%d/%m/%Y à %H:%M'), 0, True)
                     
                     pdf.set_font("Arial", 'B', 11)
                     pdf.cell(40, 7, "Filtre Presse(s) :", 0)
