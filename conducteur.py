@@ -484,9 +484,8 @@ with tab_stats:
                     pdf.set_y(-25)
                     pdf.set_font("Arial", 'I', 8)
                     pdf.set_text_color(120, 120, 120)
-                    pdf.cell(0, 5, "Rapport technique automatisé TPR", 0, 1, 'C')
-                    pdf.cell(0, 5, "Direction Maintenance et Travaux Neufs", 0, 1, 'C')
-                    
+                    pdf.cell(0, 5, "Rapport technique automatisé TPR - Direction Maintenance et Travaux Neufs", 0, 1, 'C')
+
                     # Envoi vers le bouton Streamlit
                     pdf_output = bytes(pdf.output())
                     
