@@ -388,190 +388,196 @@ with tab_stats:
                 st.metric("TOTAL GÉNÉRAL", f"{total_general} min")
     
             st.info("**Rappel des codes :** **T** : Problème de Température | **H** : Problème Hydraulique | **O** : Outillage | **R** : Raclage | **A** : Autres..")
+            # =========================================================================
+            #   📄 GÉNÉRATION DU RAPPORT PDF PREMIUM (FINITION DESIGN VIA FPDF2)
+            # =========================================================================
             st.write("### 📄 Rapport d'Activité PDF")
             
             if st.button("📊 Générer le Rapport PDF Analytique", key="btn_pdf"):
                 with st.spinner("Création du rapport au format premium..."):
-                    import base64
-                    from weasyprint import HTML
                     from datetime import timedelta
-
+                    
                     # 1. Gestion de l'heure locale (+1h pour la Tunisie)
                     heure_locale = datetime.now() + timedelta(hours=1)
                     date_str = heure_locale.strftime('%d/%m/%Y à %H:%M')
 
-                    # 2. Génération du Graphique Camembert (Style Dashboard)
+                    # 2. Génération du Graphique Camembert (Style Épuré)
                     df_pie = df_filtered.groupby('Cause_Standard').size().reset_index(name='Nombre')
-                    plt.style.use('dark_background') # Look moderne
-                    plt.rcParams['figure.facecolor'] = '#1e1e1e'
-                    plt.rcParams['axes.facecolor'] = '#1e1e1e'
+                    fig_pdf1, ax_pdf1 = plt.subplots(figsize=(6, 3.5))
+                    fig_pdf1.patch.set_facecolor('#ffffff')
+                    ax_pdf1.set_facecolor('#ffffff')
                     
-                    fig_pdf1, ax_pdf1 = plt.subplots(figsize=(6, 4))
                     ax_pdf1.pie(
                         df_pie['Nombre'], 
                         labels=df_pie['Cause_Standard'], 
                         autopct='%1.1f%%', 
                         startangle=90,
-                        colors=['#4ed0db', '#fcd170', '#ff9f73', '#d0a2f7', '#70a1ff'],
-                        textprops=dict(color="w", size=9)
+                        colors=['#0047AB', '#4ed0db', '#fcd170', '#ff9f73', '#70a1ff'],
+                        textprops=dict(color="#2c3e50", size=8)
                     )
                     ax_pdf1.axis('equal')
-                    plt.title("Répartition des Causes d'Arrêt", color='white', pad=15, fontweight='bold')
+                    plt.title("Répartition des Causes d'Arrêt", color='#1e272c', pad=10, fontweight='bold', size=11)
                     
                     img_buf1 = io.BytesIO()
-                    plt.savefig(img_buf1, format='png', bbox_inches='tight', dpi=200, facecolor='#1e1e1e')
+                    plt.savefig(img_buf1, format='png', bbox_inches='tight', dpi=200)
                     img_buf1.seek(0)
-                    base64_camembert = base64.b64encode(img_buf1.read()).decode('utf-8')
                     plt.close()
 
-                    # 3. Génération du Graphique en Barres (Style Dashboard)
+                    # 3. Génération du Graphique en Barres
                     df_bar_pdf = df_filtered.groupby(['Code_Lettre', 'Presse'])['Duree_Min'].sum().unstack().fillna(0)
+                    fig_pdf2, ax_pdf2 = plt.subplots(figsize=(6.5, 3))
+                    fig_pdf2.patch.set_facecolor('#ffffff')
+                    ax_pdf2.set_facecolor('#ffffff')
                     
-                    fig_pdf2, ax_pdf2 = plt.subplots(figsize=(7, 3.5))
-                    df_bar_pdf.plot(kind='bar', ax=ax_pdf2, width=0.6, color=['#4ed0db', '#fcd170', '#ff9f73'])
-                    ax_pdf2.set_ylabel("Minutes cumulées", color='white')
-                    ax_pdf2.set_xlabel("Cause (Code)", color='white')
-                    plt.title("Durée Totale des Arrêts par Code (min)", color='white', pad=15, fontweight='bold')
-                    plt.xticks(rotation=0)
-                    plt.grid(axis='y', linestyle='--', alpha=0.3, color='#444444')
+                    df_bar_pdf.plot(kind='bar', ax=ax_pdf2, width=0.6, color=['#0047AB', '#4ed0db', '#ff9f73'])
+                    ax_pdf2.set_ylabel("Minutes cumulées", color='#2c3e50', size=9)
+                    ax_pdf2.set_xlabel("Cause (Code)", color='#2c3e50', size=9)
+                    plt.title("Durée Totale des Arrêts par Code (min)", color='#1e272c', pad=10, fontweight='bold', size=11)
+                    plt.xticks(rotation=0, size=8)
+                    plt.yticks(size=8)
+                    plt.grid(axis='y', linestyle='--', alpha=0.5, color='#cccccc')
                     
                     img_buf2 = io.BytesIO()
-                    plt.savefig(img_buf2, format='png', bbox_inches='tight', dpi=200, facecolor='#1e1e1e')
+                    plt.savefig(img_buf2, format='png', bbox_inches='tight', dpi=200)
                     img_buf2.seek(0)
-                    base64_barres = base64.b64encode(img_buf2.read()).decode('utf-8')
                     plt.close()
 
-                    # 4. Construction de la table HTML dynamique pour les données du tableau
-                    rows_html = ""
-                    # On prend les 10 derniers incidents pour illustrer le rapport
+                    # 4. Construction du PDF avec FPDF2
+                    pdf = FPDF()
+                    pdf.set_auto_page_break(auto=True, margin=15)
+                    pdf.add_page()
+                    
+                    # --- BANDEAU SUPÉRIEUR STYLE DESIGN ---
+                    pdf.set_fill_color(30, 39, 44)  # #1e272c (Gris très sombre)
+                    pdf.rect(0, 0, 210, 38, 'F')
+                    pdf.set_fill_color(0, 71, 171)   # #0047AB (Ligne bleue TPR)
+                    pdf.rect(0, 36, 210, 2, 'F')
+                    
+                    # Textes du bandeau
+                    pdf.set_text_color(255, 255, 255)
+                    pdf.set_font("Helvetica", 'B', 18)
+                    pdf.set_y(10)
+                    pdf.cell(0, 10, "RAPPORT ANALYTIQUE DES INCIDENTS", ln=True, align='C')
+                    pdf.set_font("Helvetica", 'I', 9)
+                    pdf.set_text_color(164, 176, 190)
+                    pdf.cell(0, 5, "Suivi de la Performance de Production & Maintenance Extrudeuses (TPR)", ln=True, align='C')
+                    
+                    # Espace après le bandeau
+                    pdf.set_y(45)
+                    pdf.set_text_color(44, 62, 80)
+                    
+                    # --- SECTION 1 : INFORMATIONS GÉNÉRALES ---
+                    pdf.set_font("Helvetica", 'B', 11)
+                    pdf.set_text_color(0, 71, 171)
+                    pdf.cell(0, 8, "1. INFORMATIONS GÉNÉRALES", ln=True)
+                    pdf.set_text_color(44, 62, 80)
+                    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+                    pdf.ln(3)
+                    
+                    # Tableau des métadonnées épuré
+                    pdf.set_font("Helvetica", 'B', 9.5)
+                    pdf.cell(40, 7, " Date d'Extraction:", 1, 0, 'L', False)
+                    pdf.set_font("Helvetica", '', 9.5)
+                    pdf.cell(55, 7, f" {date_str}", 1, 0, 'L', False)
+                    pdf.set_font("Helvetica", 'B', 9.5)
+                    pdf.cell(40, 7, " Statut des Données:", 1, 0, 'L', False)
+                    pdf.set_font("Helvetica", '', 9.5)
+                    pdf.cell(55, 7, " Officiel Clôturé", 1, 1, 'L', False)
+                    
+                    pdf.set_font("Helvetica", 'B', 9.5)
+                    pdf.cell(40, 7, " Presses Incluses:", 1, 0, 'L', False)
+                    pdf.set_font("Helvetica", '', 9.5)
+                    pdf.cell(150, 7, f" {', '.join(presse_filtre)}", 1, 1, 'L', False)
+                    pdf.ln(4)
+                    
+                    # Cadre d'info gris de synthèse
+                    pdf.set_fill_color(241, 245, 249)
+                    pdf.set_font("Helvetica", 'I', 9)
+                    pdf.set_text_color(74, 85, 104)
+                    summary_text = "Note de synthèse : Ce document récapitule automatiquement l'historique filtré des pannes sur les presses TPR. Les analyses graphiques ci-dessous mettent en évidence les facteurs critiques impactant le taux de rendement global."
+                    pdf.multi_cell(190, 5, summary_text, border=0, align='L', fill=True)
+                    pdf.ln(4)
+                    
+                    # --- SECTION 2 : GRAPHIQUE PIE ---
+                    pdf.set_font("Helvetica", 'B', 11)
+                    pdf.set_text_color(0, 71, 171)
+                    pdf.cell(0, 8, "2. RÉPARTITION PROPORTNELLE DES DÉFAILLANCES", ln=True)
+                    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+                    pdf.ln(2)
+                    
+                    # Insertion de l'image centrée
+                    pdf.image(img_buf1, x=45, w=120)
+                    pdf.ln(5)
+                    
+                    # --- SECTION 3 : GRAPHIQUE BARRES ---
+                    pdf.add_page() # On passe à la page 2 pour garder une mise en page aérée
+                    pdf.set_font("Helvetica", 'B', 11)
+                    pdf.set_text_color(0, 71, 171)
+                    pdf.cell(0, 8, "3. DURÉE CUMULÉE DES ARRÊTS PAR ÉQUIPEMENT", ln=True)
+                    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+                    pdf.ln(4)
+                    
+                    pdf.image(img_buf2, x=35, w=140)
+                    pdf.ln(10)
+                    
+                    # --- SECTION 4 : TABLEAU DES DONNÉES CONSOLIDEES ---
+                    pdf.set_font("Helvetica", 'B', 11)
+                    pdf.set_text_color(0, 71, 171)
+                    pdf.cell(0, 8, "4. EXTRAIT RÉCAPITULATIF CONSOLIDÉ (10 DERNIERS INCIDENTS)", ln=True)
+                    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+                    pdf.ln(4)
+                    
+                    # En-tête du tableau de données (Style bleu royal)
+                    pdf.set_fill_color(0, 71, 171)
+                    pdf.set_text_color(255, 255, 255)
+                    pdf.set_font("Helvetica", 'B', 8.5)
+                    pdf.cell(20, 8, "Date", 1, 0, 'C', True)
+                    pdf.cell(22, 8, "Presse", 1, 0, 'C', True)
+                    pdf.cell(14, 8, "Poste", 1, 0, 'C', True)
+                    pdf.cell(16, 8, "Filière", 1, 0, 'C', True)
+                    pdf.cell(16, 8, "Lopin", 1, 0, 'C', True)
+                    pdf.cell(18, 8, "Durée", 1, 0, 'C', True)
+                    pdf.cell(84, 8, "Cause Standardisée", 1, 1, 'L', True)
+                    
+                    # Contenu du tableau (Alternance de couleurs pour lisibilité)
+                    pdf.set_text_color(44, 62, 80)
+                    pdf.set_font("Helvetica", '', 8)
+                    
                     df_table = df_filtered.tail(10)
+                    row_count = 0
                     for _, row in df_table.iterrows():
-                        rows_html += f"""
-                        <tr>
-                            <td>{row.get('Date', '-')}</td>
-                            <td>{row.get('Presse', '-')}</td>
-                            <td>Poste {row.get('Poste', '-')}</td>
-                            <td>{row.get('Filiere', '-')}</td>
-                            <td>{row.get('Lopin', '-')}</td>
-                            <td>{int(row.get('Duree_Min', 0))} min</td>
-                            <td>{row.get('Cause_Standard', '-')}</td>
-                        </tr>
-                        """
+                        bg_color = (248, 250, 252) if row_count % 2 == 0 else (255, 255, 255)
+                        pdf.set_fill_color(*bg_color)
+                        
+                        pdf.cell(20, 7, f" {row.get('Date', '-')}", 1, 0, 'C', True)
+                        pdf.cell(22, 7, f" {row.get('Presse', '-')}", 1, 0, 'C', True)
+                        pdf.cell(14, 7, f" {row.get('Poste', '-')}", 1, 0, 'C', True)
+                        pdf.cell(16, 7, f" {row.get('Filiere', '-')}", 1, 0, 'C', True)
+                        pdf.cell(16, 7, f" {row.get('Lopin', '-')}", 1, 0, 'C', True)
+                        pdf.cell(18, 7, f" {int(row.get('Duree_Min', 0))} min", 1, 0, 'C', True)
+                        
+                        # Limiter la longueur du texte de la cause pour ne pas déborder
+                        cause_txt = str(row.get('Cause_Standard', '-'))
+                        if len(cause_txt) > 52:
+                            cause_txt = cause_txt[:49] + "..."
+                        pdf.cell(84, 7, f" {cause_txt}", 1, 1, 'L', True)
+                        
+                        row_count += 1
 
-                    # 5. Le Template HTML/CSS complet (Le secret du design de l'exemple)
-                    html_content = f"""
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="utf-8">
-                        <style>
-                            @page {{
-                                size: A4;
-                                margin: 20mm 15mm 20mm 15mm;
-                                background-color: #ffffff;
-                                @bottom-right {{
-                                    content: "Page " counter(page) " / " counter(pages);
-                                    font-family: 'Helvetica Neue', Arial, sans-serif;
-                                    font-size: 8pt;
-                                    color: #7f8c8d;
-                                }}
-                                @bottom-left {{
-                                    content: "TPR - Rapport de Maintenance Confidentiel";
-                                    font-family: 'Helvetica Neue', Arial, sans-serif;
-                                    font-size: 8pt;
-                                    color: #7f8c8d;
-                                    font-weight: bold;
-                                }}
-                            }}
-                            body {{
-                                font-family: 'Helvetica Neue', Arial, sans-serif;
-                                color: #2c3e50;
-                                margin: 0; padding: 0;
-                                line-height: 1.4;
-                            }}
-                            .header-banner {{
-                                background-color: #1e272c;
-                                color: #ffffff;
-                                margin: -20mm -15mm 25px -15mm;
-                                padding: 25px 15mm;
-                                border-bottom: 4px solid #0047AB;
-                            }}
-                            .header-banner h1 {{ font-size: 20pt; margin: 0 0 5px 0; font-weight: 700; letter-spacing: 0.5px; }}
-                            .header-banner .subtitle {{ font-size: 10pt; color: #a4b0be; margin: 0; }}
-                            .meta-table {{ width: 100%; border-collapse: collapse; margin-bottom: 25px; }}
-                            .meta-table td {{ padding: 7px 10px; font-size: 9.5pt; border: 1px solid #e2e8f0; }}
-                            .meta-table td.label {{ background-color: #f8fafc; font-weight: bold; color: #4a5568; width: 25%; }}
-                            h2 {{
-                                font-size: 13pt; color: #1e272c; border-left: 4px solid #0047AB;
-                                padding-left: 10px; margin-top: 25px; margin-bottom: 15px;
-                                text-transform: uppercase; letter-spacing: 0.5px; page-break-after: avoid;
-                            }}
-                            .summary-box {{ background-color: #f1f5f9; border-radius: 4px; padding: 12px; margin-bottom: 20px; font-size: 9.5pt; }}
-                            .chart-container {{ text-align: center; margin: 15px 0; page-break-inside: avoid; }}
-                            .chart-img {{ max-width: 82%; height: auto; border-radius: 6px; }}
-                            .data-table {{ width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 9pt; page-break-inside: avoid; }}
-                            .data-table th {{ background-color: #0047AB; color: #ffffff; font-weight: bold; text-align: left; padding: 8px 10px; }}
-                            .data-table td {{ padding: 7px 10px; border: 1px solid #e2e8f0; }}
-                            .data-table tr:nth-child(even) {{ background-color: #f8fafc; }}
-                        </style>
-                    </head>
-                    <body>
-                        <div class="header-banner">
-                            <h1>RAPPORT ANALYTIQUE DES INCIDENTS</h1>
-                            <div class="subtitle">Suivi de la Performance de Production & Maintenance Extrudeuses (TPR)</div>
-                        </div>
+                    # Pied de page discret (sur chaque page de manière native ou manuelle à la fin)
+                    pdf.set_y(-20)
+                    pdf.set_font("Helvetica", 'I', 8)
+                    pdf.set_text_color(127, 140, 141)
+                    pdf.cell(0, 5, "TPR - Rapport de Maintenance Confidentiel — Direction Maintenance et Travaux Neufs", 0, 0, 'C')
+                    
+                    # Envoi final sécurisé en bytes
+                    pdf_bytes = bytes(pdf.output())
 
-                        <h2>1. Informations Générales</h2>
-                        <table class="meta-table">
-                            <tr>
-                                <td class="label">Période d'Analyse</td><td>Filtres Dynamiques Appliqués</td>
-                                <td class="label">Date d'Extraction</td><td>{date_str}</td>
-                            </tr>
-                            <tr>
-                                <td class="label">Presses Incluses</td><td>{', '.join(presse_filtre)}</td>
-                                <td class="label">Statut des Données</td><td>Officiel Clôturé</td>
-                            </tr>
-                        </table>
-
-                        <div class="summary-box">
-                            <strong>💡 Note de synthèse :</strong> Ce document récapitule automatiquement l'historique filtré des pannes sur les presses TPR. Les analyses graphiques ci-dessous mettent en évidence les facteurs critiques impactant le TRG.
-                        </div>
-
-                        <h2>2. Répartition Proportionnelle des Défaillances</h2>
-                        <div class="chart-container">
-                            <img class="chart-img" src="data:image/png;base64,{base64_camembert}">
-                        </div>
-
-                        <div style="page-break-before: always;"></div>
-
-                        <h2>3. Durée Cumulée des Arrêts par Équipement</h2>
-                        <div class="chart-container">
-                            <img class="chart-img" src="data:image/png;base64,{base64_barres}">
-                        </div>
-
-                        <h2>4. Extrait Récapitulatif Consolide (10 derniers)</h2>
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th><th>Presse</th><th>Poste</th><th>Filière</th><th>Lopin</th><th>Durée</th><th>Cause Standardisée</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {rows_html}
-                            </tbody>
-                        </table>
-                    </body>
-                    </html>
-                    """
-
-                    # 6. Compilation du HTML vers le PDF en mémoire pure
-                    pdf_bytes = HTML(string=html_content).write_pdf()
-
-                st.success("✅ Le rapport Premium a été généré avec le design exact !")
+                st.success("✅ Le rapport Premium (Génération Native FPDF) a été créé avec succès !")
                 st.download_button(
-                    label="📥 Télécharger le Rapport PDF Pro",
+                    label="📥 Télécharger le Fichier PDF Pro",
                     data=pdf_bytes,
-                    file_name=f"Rapport_Design_TPR_{heure_locale.strftime('%d_%m_%Y')}.pdf",
+                    file_name=f"Rapport_Premium_TPR_{heure_locale.strftime('%d_%m_%Y')}.pdf",
                     mime="application/pdf"
                 )
     
