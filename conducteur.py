@@ -4,7 +4,10 @@ import os
 from datetime import datetime
 import plotly.express as px  # Pour les graphiques
 from io import BytesIO      # Pour l'export Excel
-
+import io
+import matplotlib.pyplot as plt
+# Assurez-vous d'avoir fpdf2 installé (ajoutez-le à votre fichier requirements.txt : fpdf2)
+from fpdf import FPDF
 
 DB_FILE = "base_donnees_chapeaux.csv"
 
@@ -383,6 +386,112 @@ with tab_stats:
                 st.metric("TOTAL GÉNÉRAL", f"{total_general} min")
     
             st.info("**Rappel des codes :** **T** : Problème de Température | **H** : Problème Hydraulique | **O** : Outillage | **R** : Raclage | **A** : Autres..")
+            st.write("### 📄 Rapport d'Activité PDF")
+            
+            if st.button("📊 Générer le Rapport PDF Analytique", key="btn_pdf"):
+                with st.spinner("Création du rapport PDF en cours..."):
+                    
+                    # --- ÉTAPE A : Graphique Camembert (Matplotlib) ---
+                    df_pie = df_filtered.groupby('Cause_Standard').size().reset_index(name='Nombre')
+                    
+                    fig_pdf1, ax_pdf1 = plt.subplots(figsize=(6, 4))
+                    ax_pdf1.pie(
+                        df_pie['Nombre'], 
+                        labels=df_pie['Cause_Standard'], 
+                        autopct='%1.1f%%', 
+                        startangle=90,
+                        colors=['#4ed0db', '#fcd170', '#ff9f73', '#d0a2f7', '#70a1ff']
+                    )
+                    ax_pdf1.axis('equal')
+                    plt.title("Répartition des Causes d'Arrêt", fontsize=12, fontweight='bold', pad=10)
+                    
+                    img_buf1 = io.BytesIO()
+                    plt.savefig(img_buf1, format='png', bbox_inches='tight', dpi=150)
+                    img_buf1.seek(0)
+                    plt.close()
+
+                    # --- ÉTAPE B : Graphique en Barres par Code Cause (Matplotlib) ---
+                    # Groupement correct par 'Code_Lettre' pour correspondre parfaitement à l'écran fig2
+                    df_bar_pdf = df_filtered.groupby(['Code_Lettre', 'Presse'])['Duree_Min'].sum().unstack().fillna(0)
+                    
+                    fig_pdf2, ax_pdf2 = plt.subplots(figsize=(7, 3.5))
+                    df_bar_pdf.plot(kind='bar', ax=ax_pdf2, width=0.6, edgecolor='black', alpha=0.9)
+                    
+                    ax_pdf2.set_ylabel("Minutes cumulées", fontsize=10)
+                    ax_pdf2.set_xlabel("Cause (Code)", fontsize=10)
+                    ax_pdf2.set_title("Durée Totale des Arrêts par Code de Cause (min)", fontsize=12, fontweight='bold', pad=10)
+                    plt.xticks(rotation=0)
+                    plt.grid(axis='y', linestyle='--', alpha=0.5)
+                    
+                    img_buf2 = io.BytesIO()
+                    plt.savefig(img_buf2, format='png', bbox_inches='tight', dpi=150)
+                    img_buf2.seek(0)
+                    plt.close()
+
+                    # --- ÉTAPE C : Génération de l'objet FPDF ---
+                    pdf = FPDF()
+                    pdf.add_page()
+                    
+                    # Design du bandeau supérieur
+                    pdf.set_fill_color(30, 39, 44) 
+                    pdf.rect(0, 0, 210, 35, 'F')
+                    
+                    pdf.set_text_color(255, 255, 255)
+                    pdf.set_font("Arial", 'B', 16)
+                    pdf.cell(0, 12, "RAPPORT ANALYTIQUE DES INCIDENTS", ln=True, align='C')
+                    pdf.set_font("Arial", 'I', 10)
+                    pdf.cell(0, 5, "Suivi de la Performance de Production & Maintenance - TPR", ln=True, align='C')
+                    
+                    pdf.ln(15)
+                    pdf.set_text_color(0, 0, 0)
+                    
+                    # Informations contextuelles
+                    pdf.set_font("Arial", 'B', 11)
+                    pdf.cell(40, 7, "Date de génération :", 0)
+                    pdf.set_font("Arial", '', 11)
+                    pdf.cell(60, 7, datetime.now().strftime('%d/%m/%Y à %H:%M'), 0, True)
+                    
+                    pdf.set_font("Arial", 'B', 11)
+                    pdf.cell(40, 7, "Filtre Presse(s) :", 0)
+                    pdf.set_font("Arial", '', 11)
+                    pdf.cell(60, 7, ", ".join(presse_filtre), 0, True)
+                    
+                    pdf.line(10, 55, 200, 55)
+                    pdf.ln(8)
+                    
+                    # Ajout Section 1 : Camembert
+                    pdf.set_font("Arial", 'B', 13)
+                    pdf.cell(0, 8, "1. Répartition Proportionnelle des Défaillances", ln=True)
+                    pdf.ln(2)
+                    pdf.image(img_buf1, x=35, w=140)
+                    pdf.ln(10)
+                    
+                    # Ajout Section 2 : Barres cumulées
+                    pdf.set_font("Arial", 'B', 13)
+                    pdf.cell(0, 8, "2. Analyse Quantifiée des Temps d'Arrêt (Minutes)", ln=True)
+                    pdf.ln(2)
+                    pdf.image(img_buf2, x=20, w=170)
+                    
+                    # Note technique de fin
+                    pdf.set_y(-25)
+                    pdf.set_font("Arial", 'I', 8)
+                    pdf.set_text_color(120, 120, 120)
+                    pdf.cell(0, 5, "Rapport technique automatisé TPR - Généré en temps réel", 0, 1, 'C')
+                    pdf.cell(0, 5, "Direction Maintenance et Travaux Neufs - Confidentiel", 0, 0, 'C')
+                    
+                    # Envoi vers le bouton Streamlit
+                    pdf_output = bytes(pdf.output())
+                    
+                st.success("✅ Le rapport PDF a été généré avec succès !")
+                st.download_button(
+                    label="📥 Télécharger le fichier PDF",
+                    data=pdf_output,
+                    file_name=f"Rapport_Incidents_TPR_{datetime.now().strftime('%d_%m_%Y')}.pdf",
+                    mime="application/pdf"
+                )
+        
+    
+    
     else:
         st.info("Enregistrez des données pour voir les graphiques.")
 
