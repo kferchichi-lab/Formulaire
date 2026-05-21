@@ -207,7 +207,19 @@ with tab_base:
         df_affichage = pd.read_csv(DB_FILE, sep=";")
         df_affichage['Date'] = df_affichage['Date'].astype(str).str[:10]
 
+        df_affichage['Cause_Propre'] = df_affichage['Cause'].fillna("A").apply(
+            lambda x: str(x).split(" :")[0] if " :" in str(x) else str(x)
+        )
         
+        # En option : On nettoie les doublons de texte bizarres s'il y en a dans l'historique
+        mapping_filtres = {
+            "R": "R - Raclage du conteneur",
+            "O": "O - Outillage",
+            "H": "H - Problème Hydraulique",
+            "T": "T - Problème de Température",
+            "A": "A - Autres"
+        }
+        df_affichage['Cause_Filtre_Standard'] = df_affichage['Cause_Propre'].str[0].str.upper().map(mapping_filtres).fillna("A - Autres")
         colonnes_visibles = ['Date', 'Presse', 'Poste', 'Filiere', 'Lopin', 'Duree_Min', 'Cause']
         df_pour_affichage = df_affichage[[c for c in colonnes_visibles if c in df_affichage.columns]]
 
