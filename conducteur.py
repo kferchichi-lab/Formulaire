@@ -5,35 +5,12 @@ from datetime import datetime
 import plotly.express as px  # Pour les graphiques
 from io import BytesIO      # Pour l'export Excel
 
-DICTIONNAIRE_CAUSES = {
-    "R - Raclage du conteneur": [
-        "Lopin déformé",
-        "2 morceaux du lopin non alignés",
-        "Conteneur encrassé",
-        "Autre problème de raclage"
-    ],
-    "O - Outillage": [
-        "Face de contact entre conteneur et filière",
-        "Usure prématurée",
-        "Casse outillage",
-        "Changement de filière programmé"
-    ],
-    "H - Problème Hydraulique": [
-        "Pression de bridage insuffisante",
-        "Pression de chape instable",
-        "Fuite d'huile vérin",
-        "Problème de pompe"
-    ],
-    "T - Problème de Température": [
-        "Température non homogène (Filière)",
-        "Surchauffe conteneur",
-        "Refroidissement lopin insuffisant"
-    ],
-    "Autres": [
-        "Attente matière",
-        "Pause opérateur",
-        "Panne électrique générale"
-    ]
+DICTIONNAIRE_CODES = {
+    "R": ["Lopin déformé", "2 morceaux du lopin non alignés", "Conteneur encrassé", "Autre problème de raclage"],
+    "O": ["Face de contact entre conteneur et filière", "Usure prématurée", "Casse outillage", "Changement de filière programmé"],
+    "H": ["Pression de bridage insuffisante", "Pression de chape instable", "Fuite d'huile vérin", "Problème de pompe"],
+    "T": ["Température non homogène (Filière)", "Surchauffe conteneur", "Refroidissement lopin insuffisant"],
+    "A": ["Attente matière", "Pause opérateur", "Panne électrique générale"]
 }
 
 # --- CONFIGURATION DE LA PAGE ---
@@ -171,13 +148,36 @@ with tab_saisie:
             with col2:
                 num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12")
                 duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=1)
-                cause = st.selectbox("Cause identifiée (Code)", [
-                    "T - Problème de Température non homogène (Filière, conteneur, lopin)",
-                    "H - Problème Hydraulique (Pression de bridage, de chape…)",
-                    "O - Outillage : face de contact entre conteneur et filière (Usure, casse…)",
-                    "R - Raclage du conteneur : Lopin déformé, 2 morceaux du lopin non alignés..",
-                    "A - Autres..", 
-                ])
+                cause_principale = st.selectbox(
+                    "Nature de la Cause (Générale) :",
+                    options=[
+                        "R - Raclage du conteneur",
+                        "O - Outillage",
+                        "H - Problème Hydraulique",
+                        "T - Problème de Température",
+                        "A - Autres"
+                    ],
+                    key="cause_gnerale_select"
+                )
+                code_lettre = cause_principale[0]
+                raisons_disponibles = DICTIONNAIRE_CODES.get(code_lettre, DICTIONNAIRE_CODES["A"])
+
+    # --- LISTE À COCHER DES ÉLÉMENTS (DYNAMIQUE) ---
+                st.write("**Sélectionnez la ou les raisons détaillées :**")
+                raisons_choisies = []
+    
+    # On crée une case à cocher pour chaque élément de la liste
+                for raison in raisons_disponibles:
+        # Clé unique pour chaque case combinant la lettre et la raison pour éviter les conflits Streamlit
+                    if st.checkbox(raison, key=f"cb_{code_lettre}_{raison}"):
+                        raisons_choisies.append(raison)
+
+    # Si l'opérateur coche plusieurs cases, on les rassemble (ex: "Lopin déformé, Conteneur encrassé")
+    # Si aucune case n'est cochée, on met "Non spécifié" par sécurité
+                raisons_finales_texte = ", ".join(raisons_choisies) if raisons_choisies else "Non spécifié"
+
+    # Construction de la chaîne complète pour le CSV
+                cause_finale = f"{cause_principale} : {raisons_finales_texte}"
 
 
             commentaire = st.text_area("Observations / Détails de l'incident")
