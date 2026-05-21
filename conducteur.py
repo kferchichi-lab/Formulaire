@@ -16,7 +16,6 @@ DICTIONNAIRE_CODES = {
     "A": ["Attente matière", "Pause opérateur", "Panne électrique générale"]
 }
 
-# --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Suivi Arrêts TPR", page_icon="📝", layout="wide")
 
 
@@ -27,7 +26,6 @@ def sauvegarder_donnees(data):
     else:
         df.to_csv(DB_FILE, mode='a', index=False, header=False, sep=";", encoding="utf-8-sig")
 
-# --- STYLE CSS ---
 st.markdown("""
     <style>
         header { visibility: visible !important; height: 60px !important; }
@@ -139,12 +137,9 @@ with tab_saisie:
     else:
         st.subheader(f"📝 Saisie d'incident : {presse_choisie}")
         
-        # 1. ON COUPE LE FORMULAIRE EN DEUX POUR LAISSER LA CAUSE DYNAMIQUE HORS DU FORMULAIRE
+
         col1, col2 = st.columns(2)
         with col1:
-            # Ces éléments n'ont pas besoin d'être dynamiques, mais pour qu'ils s'enregistrent ensemble, 
-            # on va simplement déclarer les inputs hors formulaire ou faire un mini formulaire.
-            # Pour faire simple et propre, on met TOUS les inputs HORS formulaire, et on ne garde que le bouton dans le formulaire.
             date_j = st.date_input("Date de l'arrêt", datetime.now())
             poste = st.radio("Poste de travail", ["A", "B", "C"], horizontal=True)
             ref_filiere = st.text_input("Référence Filière", placeholder="Ex: 52000")
@@ -153,7 +148,6 @@ with tab_saisie:
             num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12")
             duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=1)
             
-            # 1. On ajoute une option d'index initial à None et un placeholder
             cause_principale = st.selectbox(
                 "Nature de la Cause (Générale) :",
                 options=[
@@ -163,20 +157,15 @@ with tab_saisie:
                     "T - Problème de Température",
                     "A - Autres"
                 ],
-                index=None,  # <-- Crucial : Démarre sans aucune sélection
-                placeholder="--- Choisir une cause générale ---",  # <-- Message d'invite
+                index=None,  
+                placeholder="--- Choisir une cause générale ---", 
                 key="cause_gnerale_select"
             )
-
-            # Initialisation de la variable pour éviter les erreurs plus bas
             raisons_finales_texte = "Non spécifié"
-
-            # 2. ON CONDITIONNE L'AFFICHAGE : Ne s'affiche QUE si cause_principale n'est pas None
             if cause_principale is not None:
                 code_lettre = cause_principale[0]
                 raisons_disponibles = DICTIONNAIRE_CODES.get(code_lettre, DICTIONNAIRE_CODES["A"])
 
-                # --- LISTE À COCHER DES ÉLÉMENTS (DYNAMIQUE) ---
                 st.write("**Sélectionnez la ou les raisons détaillées :**")
                 raisons_choisies = []
 
@@ -187,16 +176,12 @@ with tab_saisie:
                 raisons_finales_texte = ", ".join(raisons_choisies) if raisons_choisies else "Non spécifié"
                 cause_finale = f"{cause_principale} : {raisons_finales_texte}"
             else:
-                # Message discret ou conteneur vide tant que rien n'est sélectionné
                 st.info("💡 Veuillez sélectionner une nature de cause pour voir les raisons détaillées.")
 
         commentaire = st.text_area("Observations / Détails de l'incident")
         
-        # 2. ON UTILISE LE FORMULAIRE UNIQUEMENT POUR LE BOUTON DE VALIDATION ET ÉVITER LE RECHARGEMENT INTEMPESTIF
         with st.form("form_validation", clear_on_submit=True):
             submitted = st.form_submit_button("ENREGISTRER L'INCIDENT")
-
-        # 3. TRAITEMENT DE LA SAISIE
         if submitted:
             if not ref_filiere or not num_lopin:
                 st.error("Veuillez remplir les champs obligatoires (Filière et Lopin).")
@@ -211,7 +196,7 @@ with tab_saisie:
                     "Filiere": ref_filiere,
                     "Lopin": num_lopin,
                     "Duree_Min": duree,
-                    "Cause": cause_finale,  # Correction ici : Utilisation de cause_finale au lieu de cause
+                    "Cause": cause_finale, 
                     "Observations": commentaire
                 }
                 sauvegarder_donnees(nouvelle_entree)
@@ -227,7 +212,6 @@ with tab_base:
         df_pour_affichage = df_affichage[[c for c in colonnes_visibles if c in df_affichage.columns]]
 
         df_affichage['Duree_Min'] = pd.to_numeric(df_affichage['Duree_Min'], errors='coerce').fillna(0).astype(int)
-        # Filtres interactifs
         col_f1, col_f2 = st.columns(2)
         with col_f1:
             filtre_presse = st.multiselect("Filtrer par Presse :", options=df_affichage["Presse"].unique())
@@ -263,20 +247,16 @@ with tab_stats:
         if presse_filtre:
             df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)].copy()
             
-            # --- NETTOYAGE SÉCURISÉ DES DONNÉES POUR PLOTLY ---
-            # 1. On s'assure que la colonne 'Cause' ne contient pas de valeurs nulles (NaN)
             df_filtered['Cause'] = df_filtered['Cause'].fillna("A - Autres")
             
-            # 2. On extrait la cause générale proprement
+          
             df_filtered['Cause_Generale'] = df_filtered['Cause'].apply(
                 lambda x: str(x).split(" :")[0] if " :" in str(x) else str(x)
             )
             
-            # 3. SÉCURITÉ CRUCIALE : Si le DataFrame est vide après filtre, on évite de dessiner
             if df_filtered.empty or df_filtered['Cause_Generale'].dropna().empty:
                 st.warning("⚠️ Aucune donnée valide trouvée pour les filtres sélectionnés.")
             else:
-                # On utilise 'Cause_Generale' en toute sécurité
                 fig = px.pie(
                     df_filtered, 
                     names='Cause_Generale', 
@@ -304,8 +284,6 @@ with tab_stats:
 
             st.divider()
             
-            # --- POUR LE GRAPH EN BARRES (fig2) ---
-            # On applique la même sécurité pour 'Code_Cause' au cas où
             df_temp = df_filtered.copy()
             df_temp['Code_Cause'] = df_temp['Cause'].str[0].fillna("A")
 
