@@ -247,19 +247,32 @@ with tab_stats:
         if presse_filtre:
             df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)].copy()
             
-            df_filtered['Cause'] = df_filtered['Cause'].fillna("A - Autres")
+            # 1. Sécurité pour les valeurs vides
+            df_filtered['Cause'] = df_filtered['Cause'].fillna("A")
             
-          
-            df_filtered['Cause_Generale'] = df_filtered['Cause'].apply(
-                lambda x: str(x).split(" :")[0] if " :" in str(x) else str(x)
-            )
+            # 2. On extrait UNIQUEMENT la première lettre (R, O, H, T, A) et on enlève les espaces
+            df_filtered['Code_Lettre'] = df_filtered['Cause'].str[0].str.upper()
             
-            if df_filtered.empty or df_filtered['Cause_Generale'].dropna().empty:
+            # 3. On crée un dictionnaire de traduction pour avoir des noms parfaits et uniques
+            mapping_noms = {
+                "R": "R - Raclage du conteneur",
+                "O": "O - Outillage",
+                "H": "H - Problème Hydraulique",
+                "T": "T - Problème de Température",
+                "A": "A - Autres"
+            }
+            
+            # 4. On applique le nom standardisé (si la lettre n'est pas dedans, on met "A - Autres")
+            df_filtered['Cause_Standard'] = df_filtered['Code_Lettre'].map(mapping_noms).fillna("A - Autres")
+            
+            # 5. Sécurité d'affichage
+            if df_filtered.empty:
                 st.warning("⚠️ Aucune donnée valide trouvée pour les filtres sélectionnés.")
             else:
+                # On utilise 'Cause_Standard' pour le graphique de répartition
                 fig = px.pie(
                     df_filtered, 
-                    names='Cause_Generale', 
+                    names='Cause_Standard', # <-- Colonne parfaitement standardisée
                     title=f"Répartition des causes - {', '.join(presse_filtre)}",
                     hole=0.4, 
                     color_discrete_sequence=px.colors.qualitative.Pastel
@@ -284,8 +297,10 @@ with tab_stats:
 
             st.divider()
             
+            # --- CODE POUR LE GRAPH EN BARRES (fig2) ---
             df_temp = df_filtered.copy()
-            df_temp['Code_Cause'] = df_temp['Cause'].str[0].fillna("A")
+            # On réutilise la colonne Code_Lettre qu'on a déjà nettoyée et sécurisée
+            df_temp['Code_Cause'] = df_temp['Code_Lettre']
 
             st.subheader("Total des minutes d'arrêt par cause")
     
