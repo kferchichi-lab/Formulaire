@@ -5,6 +5,9 @@ from datetime import datetime
 import plotly.express as px  # Pour les graphiques
 from io import BytesIO      # Pour l'export Excel
 
+
+DB_FILE = "base_donnees_chapeaux.csv"
+
 DICTIONNAIRE_CODES = {
     "R": ["Lopin déformé", "2 morceaux du lopin non alignés", "Conteneur encrassé", "Autre problème de raclage"],
     "O": ["Face de contact entre conteneur et filière", "Usure prématurée", "Casse outillage", "Changement de filière programmé"],
@@ -15,9 +18,6 @@ DICTIONNAIRE_CODES = {
 
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Suivi Arrêts TPR", page_icon="📝", layout="wide")
-
-
-DB_FILE = "base_donnees_chapeaux.csv"
 
 
 def sauvegarder_donnees(data):
@@ -138,70 +138,73 @@ with tab_saisie:
         st.info("👈 Veuillez sélectionner une presse dans le menu à gauche pour accéder au formulaire.")
     else:
         st.subheader(f"📝 Saisie d'incident : {presse_choisie}")
-        with st.form("form_diagnostic", clear_on_submit=True):
-            col1, col2 = st.columns(2)
-            with col1:
-                date_j = st.date_input("Date de l'arrêt", datetime.now())
-                poste = st.radio("Poste de travail", ["A", "B", "C"], horizontal=True)
-                ref_filiere = st.text_input("Référence Filière", placeholder="Ex: 52000")
-           
-            with col2:
-                num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12")
-                duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=1)
-                cause_principale = st.selectbox(
-                    "Nature de la Cause (Générale) :",
-                    options=[
-                        "R - Raclage du conteneur",
-                        "O - Outillage",
-                        "H - Problème Hydraulique",
-                        "T - Problème de Température",
-                        "A - Autres"
-                    ],
-                    key="cause_gnerale_select"
-                )
-                code_lettre = cause_principale[0]
-                raisons_disponibles = DICTIONNAIRE_CODES.get(code_lettre, DICTIONNAIRE_CODES["A"])
+        
+        # 1. ON COUPE LE FORMULAIRE EN DEUX POUR LAISSER LA CAUSE DYNAMIQUE HORS DU FORMULAIRE
+        col1, col2 = st.columns(2)
+        with col1:
+            # Ces éléments n'ont pas besoin d'être dynamiques, mais pour qu'ils s'enregistrent ensemble, 
+            # on va simplement déclarer les inputs hors formulaire ou faire un mini formulaire.
+            # Pour faire simple et propre, on met TOUS les inputs HORS formulaire, et on ne garde que le bouton dans le formulaire.
+            date_j = st.date_input("Date de l'arrêt", datetime.now())
+            poste = st.radio("Poste de travail", ["A", "B", "C"], horizontal=True)
+            ref_filiere = st.text_input("Référence Filière", placeholder="Ex: 52000")
+       
+        with col2:
+            num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12")
+            duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=1)
+            
+            # Ce sélecteur DOIT être hors d'un formulaire pour être dynamique
+            cause_principale = st.selectbox(
+                "Nature de la Cause (Générale) :",
+                options=[
+                    "R - Raclage du conteneur",
+                    "O - Outillage",
+                    "H - Problème Hydraulique",
+                    "T - Problème de Température",
+                    "A - Autres"
+                ],
+                key="cause_gnerale_select"
+            )
+            code_lettre = cause_principale[0]
+            raisons_disponibles = DICTIONNAIRE_CODES.get(code_lettre, DICTIONNAIRE_CODES["A"])
 
-    # --- LISTE À COCHER DES ÉLÉMENTS (DYNAMIQUE) ---
-                st.write("**Sélectionnez la ou les raisons détaillées :**")
-                raisons_choisies = []
-    
-    # On crée une case à cocher pour chaque élément de la liste
-                for raison in raisons_disponibles:
-        # Clé unique pour chaque case combinant la lettre et la raison pour éviter les conflits Streamlit
-                    if st.checkbox(raison, key=f"cb_{code_lettre}_{raison}"):
-                        raisons_choisies.append(raison)
+            # --- LISTE À COCHER DES ÉLÉMENTS (DYNAMIQUE) ---
+            st.write("**Sélectionnez la ou les raisons détaillées :**")
+            raisons_choisies = []
 
-    # Si l'opérateur coche plusieurs cases, on les rassemble (ex: "Lopin déformé, Conteneur encrassé")
-    # Si aucune case n'est cochée, on met "Non spécifié" par sécurité
-                raisons_finales_texte = ", ".join(raisons_choisies) if raisons_choisies else "Non spécifié"
+            for raison in raisons_disponibles:
+                if st.checkbox(raison, key=f"cb_{code_lettre}_{raison}"):
+                    raisons_choisies.append(raison)
 
-    # Construction de la chaîne complète pour le CSV
-                cause_finale = f"{cause_principale} : {raisons_finales_texte}"
+            raisons_finales_texte = ", ".join(raisons_choisies) if raisons_choisies else "Non spécifié"
+            cause_finale = f"{cause_principale} : {raisons_finales_texte}"
 
-
-            commentaire = st.text_area("Observations / Détails de l'incident")
+        commentaire = st.text_area("Observations / Détails de l'incident")
+        
+        # 2. ON UTILISE LE FORMULAIRE UNIQUEMENT POUR LE BOUTON DE VALIDATION ET ÉVITER LE RECHARGEMENT INTEMPESTIF
+        with st.form("form_validation", clear_on_submit=True):
             submitted = st.form_submit_button("ENREGISTRER L'INCIDENT")
 
+        # 3. TRAITEMENT DE LA SAISIE
         if submitted:
             if not ref_filiere or not num_lopin:
                 st.error("Veuillez remplir les champs obligatoires (Filière et Lopin).")
+            elif raisons_finales_texte == "Non spécifié":
+                st.warning("⚠️ Veuillez cocher au moins une raison détaillée avant d'enregistrer.")
             else:
-                   
                 nouvelle_entree = {
-                "Date": date_j.strftime("%d/%m/%Y"),
-                "Heure_Saisie": datetime.now().strftime("%H:%M:%S"),
-                "Presse": presse_choisie,
-                "Poste": poste,
-                "Filiere": ref_filiere,
-                "Lopin": num_lopin,
-                "Duree_Min": duree,
-                "Cause": cause,
-                "Observations": commentaire
+                    "Date": date_j.strftime("%d/%m/%Y"),
+                    "Heure_Saisie": datetime.now().strftime("%H:%M:%S"),
+                    "Presse": presse_choisie,
+                    "Poste": poste,
+                    "Filiere": ref_filiere,
+                    "Lopin": num_lopin,
+                    "Duree_Min": duree,
+                    "Cause": cause_finale,  # Correction ici : Utilisation de cause_finale au lieu de cause
+                    "Observations": commentaire
                 }
-            sauvegarder_donnees(nouvelle_entree)
-            st.success(f"✅ Incident enregistré pour la {presse_choisie}")
-
+                sauvegarder_donnees(nouvelle_entree)
+                st.success(f"✅ Incident enregistré pour la {presse_choisie}")
 with tab_base:
     st.subheader("📊 Historique Global des Arrêts")
     if os.path.isfile(DB_FILE):
