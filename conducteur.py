@@ -153,7 +153,7 @@ with tab_saisie:
             num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12")
             duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=1)
             
-            # Ce sélecteur DOIT être hors d'un formulaire pour être dynamique
+            # 1. On ajoute une option d'index initial à None et un placeholder
             cause_principale = st.selectbox(
                 "Nature de la Cause (Générale) :",
                 options=[
@@ -163,21 +163,32 @@ with tab_saisie:
                     "T - Problème de Température",
                     "A - Autres"
                 ],
+                index=None,  # <-- Crucial : Démarre sans aucune sélection
+                placeholder="--- Choisir une cause générale ---",  # <-- Message d'invite
                 key="cause_gnerale_select"
             )
-            code_lettre = cause_principale[0]
-            raisons_disponibles = DICTIONNAIRE_CODES.get(code_lettre, DICTIONNAIRE_CODES["A"])
 
-            # --- LISTE À COCHER DES ÉLÉMENTS (DYNAMIQUE) ---
-            st.write("**Sélectionnez la ou les raisons détaillées :**")
-            raisons_choisies = []
+            # Initialisation de la variable pour éviter les erreurs plus bas
+            raisons_finales_texte = "Non spécifié"
 
-            for raison in raisons_disponibles:
-                if st.checkbox(raison, key=f"cb_{code_lettre}_{raison}"):
-                    raisons_choisies.append(raison)
+            # 2. ON CONDITIONNE L'AFFICHAGE : Ne s'affiche QUE si cause_principale n'est pas None
+            if cause_principale is not None:
+                code_lettre = cause_principale[0]
+                raisons_disponibles = DICTIONNAIRE_CODES.get(code_lettre, DICTIONNAIRE_CODES["A"])
 
-            raisons_finales_texte = ", ".join(raisons_choisies) if raisons_choisies else "Non spécifié"
-            cause_finale = f"{cause_principale} : {raisons_finales_texte}"
+                # --- LISTE À COCHER DES ÉLÉMENTS (DYNAMIQUE) ---
+                st.write("**Sélectionnez la ou les raisons détaillées :**")
+                raisons_choisies = []
+
+                for raison in raisons_disponibles:
+                    if st.checkbox(raison, key=f"cb_{code_lettre}_{raison}"):
+                        raisons_choisies.append(raison)
+
+                raisons_finales_texte = ", ".join(raisons_choisies) if raisons_choisies else "Non spécifié"
+                cause_finale = f"{cause_principale} : {raisons_finales_texte}"
+            else:
+                # Message discret ou conteneur vide tant que rien n'est sélectionné
+                st.info("💡 Veuillez sélectionner une nature de cause pour voir les raisons détaillées.")
 
         commentaire = st.text_area("Observations / Détails de l'incident")
         
