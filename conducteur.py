@@ -103,6 +103,24 @@ st.markdown("""
         div.stFormSubmitButton > button p {
             color: white !important;
         }
+        
+        /* Supprime définitivement la bordure et le fond gris de tous les st.form */
+        [data-testid="stForm"] {
+            border: none !important;
+            padding: 0 !important;
+            background-color: transparent !important;
+            box-shadow: none !important;
+        }
+        
+        /* Aligne le bloc contenant le bouton de soumission au centre */
+        [data-testid="stForm"] > div:last-child {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+    
         </style>
     """, unsafe_allow_html=True)
 
