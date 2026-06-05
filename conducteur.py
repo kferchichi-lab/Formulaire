@@ -120,6 +120,14 @@ st.markdown("""
             width: 100%;
             margin-top: 20px;
         }
+
+        /* Ajustement spécifique pour aligner le conteneur du bouton de téléchargement au centre */
+        div.stDownloadButton {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-top: 15px;
+        }
     
         </style>
     """, unsafe_allow_html=True)
