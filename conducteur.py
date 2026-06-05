@@ -139,8 +139,8 @@ CONFIG_PRESSES = {
 }
 
 with st.sidebar:
-    st.header("⚙️ Configuration Machine")
-    presse_choisie = st.selectbox("SÉLECTIONNER LA PRESSE :", options=list(CONFIG_PRESSES.keys()), index=None, placeholder="Choisir...")
+    st.header("⚙️ Configuration machine")
+    presse_choisie = st.selectbox("Sélectionner une presse :", options=list(CONFIG_PRESSES.keys()), index=None, placeholder="Choisir...")
   
     st.divider()
     st.markdown("<div class='temp-header'>🌡️ RAPPEL TEMPÉRATURES</div>", unsafe_allow_html=True)
@@ -160,7 +160,7 @@ with col_titre:
     st.markdown("#### Direction Maintenance et Travaux Neufs")
 st.divider()
 
-tab_saisie, tab_base, tab_stats = st.tabs(["➕ Nouvelle Saisie", "📊 Consulter la Base de Données", "📈 Analyse Graphique"])
+tab_saisie, tab_base, tab_stats = st.tabs(["➕ Nouvelle saisie", "📊 Consulter la base de données", "📈 Analyse graphique"])
 
 with tab_saisie:
     if not presse_choisie:
@@ -173,19 +173,19 @@ with tab_saisie:
         with col1:
             date_j = st.date_input("Date de l'arrêt", datetime.now())
             poste = st.radio("Poste de travail", ["A", "B", "C"], horizontal=True)
-            ref_filiere = st.text_input("Référence Filière", placeholder="Ex: 52000")
+            ref_filiere = st.text_input("Référence de la filière", placeholder="Ex: 52000")
        
         with col2:
             num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12")
             duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=1)
             
             cause_principale = st.selectbox(
-                "Nature de la Cause (Générale) :",
+                "Nature de la cause (Générale) :",
                 options=[
                     "R - Raclage du conteneur",
                     "O - Outillage",
-                    "H - Problème Hydraulique",
-                    "T - Problème de Température",
+                    "H - Problème hydraulique",
+                    "T - Problème de température",
                     "A - Autres"
                 ],
                 index=None,  
