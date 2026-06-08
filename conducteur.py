@@ -3,6 +3,7 @@ import pandas as pd
 import os
 from datetime import datetime, timedelta
 import plotly.express as px  # Pour les graphiques
+import plotly.graph_objects as go # Pour le graphique combiné double axe
 import io
 import matplotlib.pyplot as plt
 # Assurez-vous d'avoir fpdf2 installé (ajoutez-le à votre fichier requirements.txt : fpdf2)
@@ -146,7 +147,6 @@ with col_titre:
     st.markdown("#### Direction Maintenance et Travaux Neufs")
 st.divider()
 
-# Fonction centrale permettant de générer le widget de filtrage temporel là où on le souhaite
 def generer_filtre_temporel(cle_unique):
     st.write("### 📅 Sélection de la Période d'Analyse")
     col_p1, col_p2 = st.columns([1, 2])
@@ -154,7 +154,7 @@ def generer_filtre_temporel(cle_unique):
         choix_periode = st.selectbox(
             "Période de filtrage :",
             options=["Les dernières 24 heures", "Jour précédent", "Cette semaine", "Ce mois", "Cette année", "Personnalisée"],
-            index=3, # "Ce mois" par défaut comme sur votre capture d'écran
+            index=3, 
             key=f"choix_per_{cle_unique}"
         )
     aujourdhui = datetime.now().date()
@@ -198,7 +198,7 @@ def generer_filtre_temporel(cle_unique):
 tab_saisie, tab_base, tab_stats = st.tabs(["➕ Nouvelle saisie", "📊 Consulter la base de données", "📈 Analyse graphique"])
 
 # =========================================================================
-# ➕ ONGLET 1 : SAISIE (Totalement nettoyé de la zone de période)
+# ➕ ONGLET 1 : SAISIE
 # =========================================================================
 with tab_saisie:
     if not presse_choisie:
@@ -270,10 +270,9 @@ with tab_saisie:
                 st.success(f"✅ Incident enregistré pour la {presse_choisie}")
 
 # =========================================================================
-# 📊 ONGLET 2 : CONSULTATION BASE DE DONNÉES (Contient sa propre zone période)
+# 📊 ONGLET 2 : CONSULTATION BASE DE DONNÉES
 # =========================================================================
 with tab_base:
-    # Intégration du calendrier spécifiquement pour cet onglet
     date_debut_filtre, date_fin_filtre, choix_periode = generer_filtre_temporel("base")
     st.divider()
 
@@ -342,10 +341,9 @@ with tab_base:
         st.info("Aucune donnée n'a encore été enregistrée.")
 
 # =========================================================================
-# 📈 ONGLET 3 : ANALYSE GRAPHIQUE (Contient sa propre zone période)
+# 📈 ONGLET 3 : ANALYSE GRAPHIQUE
 # =========================================================================
 with tab_stats:
-    # Intégration du calendrier spécifiquement pour cet onglet de statistiques
     date_debut_stats, date_fin_stats, choix_periode_stats = generer_filtre_temporel("stats")
     st.divider()
 
@@ -354,6 +352,8 @@ with tab_stats:
         
         if 'Date' in df_stats.columns:
             df_stats['Date_Parsed'] = pd.to_datetime(df_stats['Date'], format='%d/%m/%Y', errors='coerce').dt.date
+        if 'Duree_Min' in df_stats.columns:
+            df_stats['Duree_Min'] = pd.to_numeric(df_stats['Duree_Min'], errors='coerce').fillna(0).astype(int)
         
         if date_debut_stats is not None and date_fin_stats is not None:
             df_stats = df_stats[(df_stats['Date_Parsed'] >= date_debut_stats) & (df_stats['Date_Parsed'] <= date_fin_stats)]
@@ -425,6 +425,84 @@ with tab_stats:
                     st.metric("TOTAL GÉNÉRAL", f"{total_general} min")
         
                 st.info("**Rappel des codes :** **T** : Problème de Température | **H** : Problème Hydraulique | **O** : Outillage | **R** : Raclage | **A** : Autres..")
+                
+                # =========================================================================
+                # 🔥 NOUVELLE SECTION : TOP 10 DES FILIÈRES PAR PRESSE & FRÉQUENCE
+                # =========================================================================
+                st.divider()
+                st.subheader("🔝 Top 10 des Filières les plus pénalisantes par Presse")
+                st.write("Ce graphique affiche la durée totale cumulée des arrêts (Barres) ainsi que la fréquence d'apparition de l'anomalie (Ligne) pour chaque filière.")
+                
+                # S'assurer que le champ Filiere est une chaîne propre sans espaces
+                df_filtered['Filiere'] = df_filtered['Filiere'].astype(str).str.strip()
+
+                for pr in presse_filtre:
+                    df_pr = df_filtered[df_filtered['Presse'] == pr]
+                    if not df_pr.empty:
+                        # Grouper par filière pour calculer la durée cumulée et la fréquence (nombre de pannes)
+                        df_filiere_stats = df_pr.groupby('Filiere').agg(
+                            Duree_Totale=('Duree_Min', 'sum'),
+                            Frequence=('Filiere', 'count')
+                        ).reset_index()
+                        
+                        # Récupérer uniquement le TOP 10 des pires filières (triées par durée totale décroissante)
+                        top_10_filieres = df_filiere_stats.sort_values(by='Duree_Totale', ascending=False).head(10)
+                        
+                        # Création du graphique combiné double axe Plotly
+                        fig_comb = go.Figure()
+
+                        # 1. Ajout de l'axe des barres (Durée totale en min)
+                        fig_comb.add_trace(
+                            go.Bar(
+                                x=top_10_filieres['Filiere'],
+                                y=top_10_filieres['Duree_Totale'],
+                                name="Durée totale des arrêts (min)",
+                                marker_color='#1f77b4',
+                                opacity=0.85
+                            )
+                        )
+
+                        # 2. Ajout de la ligne (Fréquence d'apparition)
+                        fig_comb.add_trace(
+                            go.Scatter(
+                                x=top_10_filieres['Filiere'],
+                                y=top_10_filieres['Frequence'],
+                                name="Fréquence d'apparition",
+                                mode='lines+markers',
+                                line=dict(color='#ff7f0e', width=3),
+                                marker=dict(size=8),
+                                yaxis="y2" # Assigne cette courbe au deuxième axe Y
+                            )
+                        )
+
+                        # Configuration du layout pour gérer le double axe Y
+                        fig_comb.update_layout(
+                            title=f"Top 10 Filières Critiques - {pr}",
+                            xaxis=dict(title="Référence Filière", type='category'),
+                            yaxis=dict(
+                                title="Durée totale des arrêts (Minutes)",
+                                titlefont=dict(color="#1f77b4"),
+                                tickfont=dict(color="#1f77b4")
+                            ),
+                            yaxis2=dict(
+                                title="Nombre d'incidents (Fréquence)",
+                                titlefont=dict(color="#ff7f0e"),
+                                tickfont=dict(color="#ff7f0e"),
+                                overlaying="y",
+                                side="right",
+                                anchor="x"
+                            ),
+                            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                            margin=dict(l=50, r=50, t=80, b=50),
+                            height=450
+                        )
+                        
+                        st.plotly_chart(fig_comb, use_container_width=True)
+
+                # =========================================================================
+                # 📄 EXPORT RAPPORT PDF
+                # =========================================================================
+                st.divider()
                 st.write("### 📄 Rapport d'Activité PDF")
                 
                 if st.button("📊 Générer le Rapport PDF Analytique", key="btn_pdf"):
