@@ -3,7 +3,6 @@ import pandas as pd
 import os
 from datetime import datetime, timedelta
 import plotly.express as px  # Pour les graphiques
-import plotly.graph_objects as go # Pour le graphique combiné double axe
 import io
 import matplotlib.pyplot as plt
 # Assurez-vous d'avoir fpdf2 installé (ajoutez-le à votre fichier requirements.txt : fpdf2)
@@ -125,14 +124,6 @@ CONFIG_PRESSES = {
     "Presse 7": {"diametre": 178},
 }
 
-col_logo, col_titre = st.columns([1, 5])
-with col_logo:
-    st.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6q1BtDSDgVnJZFo0hOBfQJoDS6OYiub-qfQ&s", width=150)
-with col_titre:
-    st.markdown("## Tunisie Profilés d'Aluminium")
-    st.markdown("#### Direction Maintenance et Travaux Neufs")
-st.divider()
-
 with st.sidebar:
     st.header("⚙️ Configuration machine")
     presse_choisie = st.selectbox("Sélectionner une presse :", options=list(CONFIG_PRESSES.keys()), index=None, placeholder="Choisir...")
@@ -147,6 +138,15 @@ with st.sidebar:
     """)
     st.warning("⚠️ Tolérance : +/- 10°C")
 
+col_logo, col_titre = st.columns([1, 5])
+with col_logo:
+    st.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6q1BtDSDgVnJZFo0hOBfQJoDS6OYiub-qfQ&s", width=150)
+with col_titre:
+    st.markdown("## Tunisie Profilés d'Aluminium")
+    st.markdown("#### Direction Maintenance et Travaux Neufs")
+st.divider()
+
+# Fonction centrale permettant de générer le widget de filtrage temporel là où on le souhaite
 def generer_filtre_temporel(cle_unique):
     st.write("### 📅 Sélection de la Période d'Analyse")
     col_p1, col_p2 = st.columns([1, 2])
@@ -154,7 +154,7 @@ def generer_filtre_temporel(cle_unique):
         choix_periode = st.selectbox(
             "Période de filtrage :",
             options=["Les dernières 24 heures", "Jour précédent", "Cette semaine", "Ce mois", "Cette année", "Personnalisée"],
-            index=3, 
+            index=3, # "Ce mois" par défaut comme sur votre capture d'écran
             key=f"choix_per_{cle_unique}"
         )
     aujourdhui = datetime.now().date()
@@ -198,7 +198,7 @@ def generer_filtre_temporel(cle_unique):
 tab_saisie, tab_base, tab_stats = st.tabs(["➕ Nouvelle saisie", "📊 Consulter la base de données", "📈 Analyse graphique"])
 
 # =========================================================================
-# ➕ ONGLET 1 : SAISIE
+# ➕ ONGLET 1 : SAISIE (Totalement nettoyé de la zone de période)
 # =========================================================================
 with tab_saisie:
     if not presse_choisie:
@@ -270,9 +270,10 @@ with tab_saisie:
                 st.success(f"✅ Incident enregistré pour la {presse_choisie}")
 
 # =========================================================================
-# 📊 ONGLET 2 : CONSULTATION BASE DE DONNÉES
+# 📊 ONGLET 2 : CONSULTATION BASE DE DONNÉES (Contient sa propre zone période)
 # =========================================================================
 with tab_base:
+    # Intégration du calendrier spécifiquement pour cet onglet
     date_debut_filtre, date_fin_filtre, choix_periode = generer_filtre_temporel("base")
     st.divider()
 
@@ -341,56 +342,29 @@ with tab_base:
         st.info("Aucune donnée n'a encore été enregistrée.")
 
 # =========================================================================
-# 📈 ONGLET 3 : ANALYSE GRAPHIQUE (VERSION COMPLÈTEMENT SÉCURISÉE)
+# 📈 ONGLET 3 : ANALYSE GRAPHIQUE (Contient sa propre zone période)
 # =========================================================================
 with tab_stats:
+    # Intégration du calendrier spécifiquement pour cet onglet de statistiques
     date_debut_stats, date_fin_stats, choix_periode_stats = generer_filtre_temporel("stats")
     st.divider()
 
     if os.path.isfile(DB_FILE):
-        df_brut_stats = pd.read_csv(DB_FILE, sep=";")
+        df_stats = pd.read_csv(DB_FILE, sep=";")
         
-        # Nettoyage automatique des noms des colonnes (supprime espaces et gère les accents cachés)
-        df_brut_stats.columns = df_brut_stats.columns.str.strip()
-        if 'Filière' in df_brut_stats.columns:
-            df_brut_stats.rename(columns={'Filière': 'Filiere'}, inplace=True)
-
-        if 'Date' in df_brut_stats.columns:
-            df_brut_stats['Date_Parsed'] = pd.to_datetime(df_brut_stats['Date'], format='%d/%m/%Y', errors='coerce').dt.date
-        if 'Duree_Min' in df_brut_stats.columns:
-            df_brut_stats['Duree_Min'] = pd.to_numeric(df_brut_stats['Duree_Min'], errors='coerce').fillna(0).astype(int)
+        if 'Date' in df_stats.columns:
+            df_stats['Date_Parsed'] = pd.to_datetime(df_stats['Date'], format='%d/%m/%Y', errors='coerce').dt.date
         
-        # Filtrage temporel intelligent
         if date_debut_stats is not None and date_fin_stats is not None:
-            df_stats_filtre_date = df_brut_stats[(df_brut_stats['Date_Parsed'] >= date_debut_stats) & (df_brut_stats['Date_Parsed'] <= date_fin_stats)]
-        else:
-            df_stats_filtre_date = df_brut_stats.copy()
-
-        # SECURITÉ ABSOLUE : Si le filtre temporel (Ex: "Ce mois") est vide alors qu'il y a des données globales,
-        # on désactive temporairement le filtre de date pour ne pas bloquer l'écran à l'utilisateur.
-        if df_stats_filtre_date.empty and not df_brut_stats.empty:
-            st.warning(f"⚠️ Aucun incident trouvé pour la période '{choix_periode_stats}'. Affichage par défaut de tout l'historique complet pour vos tests.")
-            df_stats_filtre_date = df_brut_stats.copy()
+            df_stats = df_stats[(df_stats['Date_Parsed'] >= date_debut_stats) & (df_stats['Date_Parsed'] <= date_fin_stats)]
 
         st.subheader("Analyse des causes par Presse")
+        presse_filtre = st.multiselect("Sélectionner les presses à analyser :", options=df_stats["Presse"].unique() if not df_stats.empty else [], default=df_stats["Presse"].unique() if not df_stats.empty else [])
         
-        # Liste des presses valides présentes
-        liste_presses_dispo = list(df_stats_filtre_date["Presse"].dropna().unique()) if not df_stats_filtre_date.empty else []
-        
-        if len(liste_presses_dispo) == 0 and not df_brut_stats.empty:
-            liste_presses_dispo = list(df_brut_stats["Presse"].dropna().unique())
-
-        presse_filtre = st.multiselect(
-            "Sélectionner les presses à analyser :", 
-            options=liste_presses_dispo, 
-            default=liste_presses_dispo
-        )
-        
-        if len(presse_filtre) > 0:
-            df_filtered = df_stats_filtre_date[df_stats_filtre_date["Presse"].isin(presse_filtre)].copy() if not df_stats_filtre_date.empty else df_brut_stats[df_brut_stats["Presse"].isin(presse_filtre)].copy()
-            
+        if not df_stats.empty and presse_filtre:
+            df_filtered = df_stats[df_stats["Presse"].isin(presse_filtre)].copy()
             df_filtered['Cause'] = df_filtered['Cause'].fillna("A")
-            df_filtered['Code_Lettre'] = df_filtered['Cause'].astype(str).str[0].str.upper()
+            df_filtered['Code_Lettre'] = df_filtered['Cause'].str[0].str.upper()
             
             mapping_noms = {
                 "R": "R - Raclage du conteneur",
@@ -402,9 +376,8 @@ with tab_stats:
             df_filtered['Cause_Standard'] = df_filtered['Code_Lettre'].map(mapping_noms).fillna("A - Autres")
             
             if df_filtered.empty:
-                st.info("Aucun enregistrement trouvé pour ces filtres.")
+                st.warning("⚠️ Aucune donnée valide trouvée pour la période sélectionnée.")
             else:
-                # Graphique en camembert
                 fig = px.pie(
                     df_filtered, 
                     names='Cause_Standard',
@@ -416,12 +389,12 @@ with tab_stats:
                 fig.update_layout(legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.05))
                 st.plotly_chart(fig, use_container_width=True)
 
-                st.divider()
-                
+            st.divider()
+            
+            if not df_filtered.empty:
                 df_temp = df_filtered.copy()
                 df_temp['Code_Cause'] = df_temp['Code_Lettre']
 
-                # Graphique en barres des causes
                 st.subheader("Total des minutes d'arrêt par cause")
                 fig2 = px.bar(
                     df_temp, 
@@ -452,93 +425,6 @@ with tab_stats:
                     st.metric("TOTAL GÉNÉRAL", f"{total_general} min")
         
                 st.info("**Rappel des codes :** **T** : Problème de Température | **H** : Problème Hydraulique | **O** : Outillage | **R** : Raclage | **A** : Autres..")
-                
-                # =========================================================================
-                # 🔥 GRAPHES DES FILIÈRES SÉCURISÉS (TOP 10 + FRÉQUENCE DOUBLE AXE)
-                # =========================================================================
-                st.divider()
-                st.subheader("🔝 Top 10 des Filières les plus pénalisantes par Presse")
-                
-                if 'Filiere' in df_filtered.columns:
-                    # Traitement de choc pour transformer n'importe quel type de données en chaîne propre (ex: évite les 52000.0)
-                    df_filtered['Filiere_Clean'] = df_filtered['Filiere'].astype(str).str.strip().str.replace(r'\.0$', '', regex=True)
-                    df_filtered = df_filtered[(df_filtered['Filiere_Clean'] != "") & (df_filtered['Filiere_Clean'].str.lower() != "nan") & (df_filtered['Filiere_Clean'] != "None")]
-
-                    # Parcourir chaque presse sélectionnée pour faire un graphique dédié
-                    for pr in presse_filtre:
-                        df_pr = df_filtered[df_filtered['Presse'] == pr]
-                        
-                        if not df_pr.empty:
-                            # Groupement pour compter le cumul des minutes ET le nombre de lignes (Fréquence d'apparition)
-                            df_filiere_stats = df_pr.groupby('Filiere_Clean').agg(
-                                Duree_Totale=('Duree_Min', 'sum'),
-                                Frequence=('Filiere_Clean', 'count')
-                            ).reset_index()
-                            
-                            # On extrait uniquement le TOP 10 des pires filières
-                            top_10_filieres = df_filiere_stats.sort_values(by='Duree_Totale', ascending=False).head(10)
-                            
-                            if not top_10_filieres.empty:
-                                fig_comb = go.Figure()
-
-                                # 1. Ajout de l'axe des barres (Axe Y gauche : Minutes cumulées)
-                                fig_comb.add_trace(
-                                    go.Bar(
-                                        x=top_10_filieres['Filiere_Clean'],
-                                        y=top_10_filieres['Duree_Totale'],
-                                        name="Minutes d'arrêt (Barres)",
-                                        marker_color='#0047AB',
-                                        opacity=0.85
-                                    )
-                                )
-
-                                # 2. Ajout de l'axe de la ligne (Axe Y droit : Fréquence de panne)
-                                fig_comb.add_trace(
-                                    go.Scatter(
-                                        x=top_10_filieres['Filiere_Clean'],
-                                        y=top_10_filieres['Frequence'],
-                                        name="Fréquence d'apparition (Ligne)",
-                                        mode='lines+markers',
-                                        line=dict(color='#FF7F0E', width=3),
-                                        marker=dict(size=9, symbol="diamond"),
-                                        yaxis="y2" # Rattachement à l'axe secondaire de droite
-                                    )
-                                )
-
-                                # Configuration graphique avancée pour le double axe Y
-                                fig_comb.update_layout(
-                                    title=f"Top 10 Filières Critiques & Fréquence de pannes — {pr}",
-                                    xaxis=dict(title="Référence de la Filière", type='category'),
-                                    yaxis=dict(
-                                        title="Durée totale des arrêts (Minutes)",
-                                        titlefont=dict(color="#0047AB"),
-                                        tickfont=dict(color="#0047AB")
-                                    ),
-                                    yaxis2=dict(
-                                        title="Nombre d'incidents (Fréquence)",
-                                        titlefont=dict(color="#FF7F0E"),
-                                        tickfont=dict(color="#FF7F0E"),
-                                        overlaying="y",
-                                        side="right",
-                                        anchor="x"
-                                    ),
-                                    legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1),
-                                    height=450,
-                                    margin=dict(l=60, r=60, t=80, b=60)
-                                )
-                                
-                                st.plotly_chart(fig_comb, use_container_width=True)
-                            else:
-                                st.caption(f"Aucune donnée exploitable pour générer le graphique des filières sur la {pr}.")
-                        else:
-                            st.info(f"ℹ️ Aucun incident lié aux filières n'a été trouvé pour la {pr} sur cette période.")
-                else:
-                    st.error("❌ Erreur structurelle : la colonne 'Filiere' est introuvable dans le fichier CSV.")
-
-                # =========================================================================
-                # 📄 EXPORT RAPPORT PDF
-                # =========================================================================
-                st.divider()
                 st.write("### 📄 Rapport d'Activité PDF")
                 
                 if st.button("📊 Générer le Rapport PDF Analytique", key="btn_pdf"):
@@ -628,9 +514,9 @@ with tab_stats:
                         mime="application/pdf"
                     )
         else:
-            st.info("Sélectionnez au moins une presse ci-dessus pour afficher l'analyse graphique.")
+            st.info("Aucune donnée disponible pour cette période ou aucune presse cochée.")
     else:
-        st.info("Aucune donnée enregistrée dans la base pour le moment.")
+        st.info("Enregistrez des données pour voir les graphiques.")
 
 st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
 st.markdown(
