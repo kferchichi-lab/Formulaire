@@ -146,60 +146,60 @@ with col_titre:
     st.markdown("#### Direction Maintenance et Travaux Neufs")
 st.divider()
 
-# =========================================================================
-# 📅 BLOCK DE DÉFINITION DE LA PÉRIODE (Placé en haut pour portée globale)
-# =========================================================================
-st.write("### 📅 Sélection de la Période d'Analyse")
-col_p1, col_p2 = st.columns([1, 2])
+# Fonction centrale permettant de générer le widget de filtrage temporel là où on le souhaite
+def generer_filtre_temporel(cle_unique):
+    st.write("### 📅 Sélection de la Période d'Analyse")
+    col_p1, col_p2 = st.columns([1, 2])
+    with col_p1:
+        choix_periode = st.selectbox(
+            "Période de filtrage :",
+            options=["Les dernières 24 heures", "Jour précédent", "Cette semaine", "Ce mois", "Cette année", "Personnalisée"],
+            index=3, # "Ce mois" par défaut comme sur votre capture d'écran
+            key=f"choix_per_{cle_unique}"
+        )
+    aujourdhui = datetime.now().date()
+    date_debut = aujourdhui
+    date_fin = aujourdhui
 
-with col_p1:
-    choix_periode = st.selectbox(
-        "Période de filtrage :",
-        options=["Les dernières 24 heures", "Jour précédent", "Cette semaine", "Ce mois", "Cette année", "Personnalisée"],
-        index=0
-    )
+    if choix_periode == "Les dernières 24 heures":
+        date_debut = aujourdhui - timedelta(days=1)
+        date_fin = aujourdhui
+    elif choix_periode == "Jour précédent":
+        date_debut = aujourdhui - timedelta(days=1)
+        date_fin = aujourdhui - timedelta(days=1)
+    elif choix_periode == "Cette semaine":
+        date_debut = aujourdhui - timedelta(days=aujourdhui.weekday())
+        date_fin = aujourdhui
+    elif choix_periode == "Ce mois":
+        date_debut = aujourdhui.replace(day=1)
+        date_fin = aujourdhui
+    elif choix_periode == "Cette année":
+        date_debut = aujourdhui.replace(month=1, day=1)
+        date_fin = aujourdhui
+    elif choix_periode == "Personnalisée":
+        with col_p2:
+            mode_perso = st.radio("Sélectionner la méthode :", ["Un jour", "Plusieurs jours"], horizontal=True, key=f"mode_p_{cle_unique}")
+            if mode_perso == "Un jour":
+                date_choisie = st.date_input("Sélectionner le jour exact", aujourdhui, key=f"date_un_{cle_unique}")
+                date_debut = date_choisie
+                date_fin = date_choisie
+            else:
+                dates_choisies = st.date_input("Sélectionner la plage de dates", [aujourdhui - timedelta(days=7), aujourdhui], key=f"date_mult_{cle_unique}")
+                if isinstance(dates_choisies, (list, tuple)):
+                    if len(dates_choisies) == 2:
+                        date_debut = dates_choisies[0]
+                        date_fin = dates_choisies[1]
+                    elif len(dates_choisies) == 1:
+                        date_debut = dates_choisies[0]
+                        date_fin = dates_choisies[0]
+    return date_debut, date_fin, choix_periode
 
-aujourdhui = datetime.now().date()
-date_debut_filtre = aujourdhui
-date_fin_filtre = aujourdhui
 
-if choix_periode == "Les dernières 24 heures":
-    date_debut_filtre = aujourdhui - timedelta(days=1)
-    date_fin_filtre = aujourdhui
-elif choix_periode == "Jour précédent":
-    date_debut_filtre = aujourdhui - timedelta(days=1)
-    date_fin_filtre = aujourdhui - timedelta(days=1)
-elif choix_periode == "Cette semaine":
-    date_debut_filtre = aujourdhui - timedelta(days=aujourdhui.weekday())
-    date_fin_filtre = aujourdhui
-elif choix_periode == "Ce mois":
-    date_debut_filtre = aujourdhui.replace(day=1)
-    date_fin_filtre = aujourdhui
-elif choix_periode == "Cette année":
-    date_debut_filtre = aujourdhui.replace(month=1, day=1)
-    date_fin_filtre = aujourdhui
-elif choix_periode == "Personnalisée":
-    with col_p2:
-        mode_perso = st.radio("Sélectionner la méthode :", ["Un jour", "Plusieurs jours"], horizontal=True)
-        if mode_perso == "Un jour":
-            date_choisie = st.date_input("Sélectionner le jour exact", aujourdhui)
-            date_debut_filtre = date_choisie
-            date_fin_filtre = date_choisie
-        else:
-            dates_choisies = st.date_input("Sélectionner la plage de dates", [aujourdhui - timedelta(days=7), aujourdhui])
-            if isinstance(dates_choisies, (list, tuple)):
-                if len(dates_choisies) == 2:
-                    date_debut_filtre = dates_choisies[0]
-                    date_fin_filtre = dates_choisies[1]
-                elif len(dates_choisies) == 1:
-                    date_debut_filtre = dates_choisies[0]
-                    date_fin_filtre = dates_choisies[0]
-
-st.divider()
-
-# Initialisation des onglets après la sélection temporelle globale
 tab_saisie, tab_base, tab_stats = st.tabs(["➕ Nouvelle saisie", "📊 Consulter la base de données", "📈 Analyse graphique"])
 
+# =========================================================================
+# ➕ ONGLET 1 : SAISIE (Totalement nettoyé de la zone de période)
+# =========================================================================
 with tab_saisie:
     if not presse_choisie:
         st.info("👈 Veuillez sélectionner une presse dans le menu à gauche pour accéder au formulaire.")
@@ -269,7 +269,14 @@ with tab_saisie:
                 sauvegarder_donnees(nouvelle_entree)
                 st.success(f"✅ Incident enregistré pour la {presse_choisie}")
 
+# =========================================================================
+# 📊 ONGLET 2 : CONSULTATION BASE DE DONNÉES (Contient sa propre zone période)
+# =========================================================================
 with tab_base:
+    # Intégration du calendrier spécifiquement pour cet onglet
+    date_debut_filtre, date_fin_filtre, choix_periode = generer_filtre_temporel("base")
+    st.divider()
+
     st.subheader("📊 Historique Global des Arrêts")
     if os.path.isfile(DB_FILE):
         df_affichage = pd.read_csv(DB_FILE, sep=";")
@@ -294,7 +301,6 @@ with tab_base:
         if 'Duree_Min' in df_affichage.columns:
             df_affichage['Duree_Min'] = pd.to_numeric(df_affichage['Duree_Min'], errors='coerce').fillna(0).astype(int)
 
-        # Filtres interactifs complémentaires (Presse / Cause)
         col_f1, col_f2 = st.columns(2)
         with col_f1:
             options_presse = df_affichage["Presse"].unique() if "Presse" in df_affichage.columns else []
@@ -303,7 +309,6 @@ with tab_base:
             options_cause = sorted(df_affichage["Cause_Filtre_Standard"].unique())
             filtre_cause = st.multiselect("Filtrer par Cause :", options=options_cause)
        
-        # APPLICATION STRICTE ET SÉCURISÉE DU FILTRE DE DATE GLOBAL
         df_filtre = df_affichage.copy()
         if date_debut_filtre is not None and date_fin_filtre is not None:
             df_filtre = df_filtre[(df_filtre['Date_Parsed'] >= date_debut_filtre) & (df_filtre['Date_Parsed'] <= date_fin_filtre)]
@@ -317,7 +322,6 @@ with tab_base:
         colonnes_existantes = [c for c in colonnes_visibles if c in df_filtre.columns]
         
         df_pour_affichage = df_filtre[colonnes_existantes].copy()
-        
         traductions = {
             'Date': 'Date', 'Presse': 'Presse', 'Poste': 'Poste', 
             'Filiere': 'Filière', 'Lopin': 'Lopin', 
@@ -337,16 +341,22 @@ with tab_base:
     else:
         st.info("Aucune donnée n'a encore été enregistrée.")
 
+# =========================================================================
+# 📈 ONGLET 3 : ANALYSE GRAPHIQUE (Contient sa propre zone période)
+# =========================================================================
 with tab_stats:
+    # Intégration du calendrier spécifiquement pour cet onglet de statistiques
+    date_debut_stats, date_fin_stats, choix_periode_stats = generer_filtre_temporel("stats")
+    st.divider()
+
     if os.path.isfile(DB_FILE):
         df_stats = pd.read_csv(DB_FILE, sep=";")
         
         if 'Date' in df_stats.columns:
             df_stats['Date_Parsed'] = pd.to_datetime(df_stats['Date'], format='%d/%m/%Y', errors='coerce').dt.date
         
-        # APPLICATION DU MÊME FILTRE DE DATE ICI AUSSI
-        if date_debut_filtre is not None and date_fin_filtre is not None:
-            df_stats = df_stats[(df_stats['Date_Parsed'] >= date_debut_filtre) & (df_stats['Date_Parsed'] <= date_fin_filtre)]
+        if date_debut_stats is not None and date_fin_stats is not None:
+            df_stats = df_stats[(df_stats['Date_Parsed'] >= date_debut_stats) & (df_stats['Date_Parsed'] <= date_fin_stats)]
 
         st.subheader("Analyse des causes par Presse")
         presse_filtre = st.multiselect("Sélectionner les presses à analyser :", options=df_stats["Presse"].unique() if not df_stats.empty else [], default=df_stats["Presse"].unique() if not df_stats.empty else [])
@@ -473,7 +483,7 @@ with tab_stats:
                         pdf.set_font("Arial", 'B', 11)
                         pdf.cell(40, 7, "Période analysée :", 0)
                         pdf.set_font("Arial", '', 11)
-                        pdf.cell(60, 7, choix_periode, 0, True)
+                        pdf.cell(60, 7, choix_periode_stats, 0, True)
                         
                         pdf.line(10, 60, 200, 60)
                         pdf.ln(8)
