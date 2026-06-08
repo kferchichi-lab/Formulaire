@@ -1,14 +1,13 @@
 import streamlit as st
 import pandas as pd
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import plotly.express as px  # Pour les graphiques
 from io import BytesIO      # Pour l'export Excel
 import io
 import matplotlib.pyplot as plt
 # Assurez-vous d'avoir fpdf2 installé (ajoutez-le à votre fichier requirements.txt : fpdf2)
 from fpdf import FPDF
-from datetime import timedelta
 heure_locale = datetime.now() + timedelta(hours=1)
 
 DB_FILE = "base_donnees_chapeaux.csv"
@@ -258,10 +257,64 @@ with tab_base:
 
         # Formatage de la date
         if 'Date' in df_affichage.columns:
+            df_affichage['Date_Parsed'] = pd.to_datetime(df_affichage['Date'], format='%d/%m/%Y', errors='coerce')
             df_affichage['Date'] = df_affichage['Date'].astype(str).str[:10]
         if 'Duree_Min' in df_affichage.columns:
             df_affichage['Duree_Min'] = pd.to_numeric(df_affichage['Duree_Min'], errors='coerce').fillna(0).astype(int)
+        
+        
+        
+        # =========================================================================
+        # 🆕 BLOC SELECTION PERIODE (DEMANDE UTILISATEUR)
+        # =========================================================================
+        st.write("### 📅 Filtrer par Période")
+        col_p1, col_p2 = st.columns([1, 2])
+        
+        with col_p1:
+            choix_periode = st.selectbox(
+                "Période",
+                options=["Les dernières 24 heures", "Jour précédent", "Cette semaine", "Ce mois", "Cette année", "Personnalisée"],
+                index=5  # Par défaut sur "Personnalisée" comme sur vos captures
+            )
+            
+        date_debut_filtre = None
+        date_fin_filtre = None
+        maintenant = datetime.now()
 
+        if choix_periode == "Les dernières 24 heures":
+            date_debut_filtre = maintenant - timedelta(days=1)
+            date_fin_filtre = maintenant
+        elif choix_periode == "Jour précédent":
+            date_debut_filtre = (maintenant - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+            date_fin_filtre = maintenant.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(seconds=1)
+        elif choix_periode == "Cette semaine":
+            date_debut_filtre = maintenant - timedelta(days=maintenant.weekday())
+            date_debut_filtre = date_debut_filtre.replace(hour=0, minute=0, second=0, microsecond=0)
+            date_fin_filtre = maintenant
+        elif choix_periode == "Ce mois":
+            date_debut_filtre = maintenant.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            date_fin_filtre = maintenant
+        elif choix_periode == "Cette année":
+            date_debut_filtre = maintenant.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            date_fin_filtre = maintenant
+        elif choix_periode == "Personnalisée":
+            with col_p2:
+                mode_perso = st.radio("", ["Un jour", "Plusieurs jours"], horizontal=True)
+                if mode_perso == "Un jour":
+                    date_choisie = st.date_input("Sélectionner le jour", maintenant.date())
+                    date_debut_filtre = datetime.combine(date_choisie, datetime.min.time())
+                    date_fin_filtre = datetime.combine(date_choisie, datetime.max.time())
+                else:
+                    dates_choisies = st.date_input("Sélectionner la plage de dates", [maintenant.date(), maintenant.date()])
+                    if isinstance(dates_choisies, list) or isinstance(dates_choisies, tuple):
+                        if len(dates_choisies) == 2:
+                            date_debut_filtre = datetime.combine(dates_choisies[0], datetime.min.time())
+                            date_fin_filtre = datetime.combine(dates_choisies[1], datetime.max.time())
+                        elif len(dates_choisies) == 1:
+                            date_debut_filtre = datetime.combine(dates_choisies[0], datetime.min.time())
+                            date_fin_filtre = datetime.combine(dates_choisies[0], datetime.max.time())
+
+        st.divider()
         # 3. INTERFACE DES FILTRES
         col_f1, col_f2 = st.columns(2)
         with col_f1:
