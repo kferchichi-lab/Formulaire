@@ -265,7 +265,7 @@ with tab_base:
         
         
         # =========================================================================
-        # 🆕 BLOC SELECTION PERIODE (DEMANDE UTILISATEUR)
+        # 📅 CHOIX DE LA PÉRIODE DE FILTRAGE
         # =========================================================================
         st.write("### 📅 Filtrer par Période")
         col_p1, col_p2 = st.columns([1, 2])
@@ -274,45 +274,45 @@ with tab_base:
             choix_periode = st.selectbox(
                 "Période",
                 options=["Les dernières 24 heures", "Jour précédent", "Cette semaine", "Ce mois", "Cette année", "Personnalisée"],
-                index=5  # Par défaut sur "Personnalisée" comme sur vos captures
+                index=5
             )
             
         date_debut_filtre = None
         date_fin_filtre = None
-        maintenant = datetime.now()
+        aujourdhui = datetime.now().date()
 
         if choix_periode == "Les dernières 24 heures":
-            date_debut_filtre = maintenant - timedelta(days=1)
-            date_fin_filtre = maintenant
+            # Pour éviter les coupures d'heures, on inclut aujourd'hui et hier complètement
+            date_debut_filtre = aujourdhui - timedelta(days=1)
+            date_fin_filtre = aujourdhui
         elif choix_periode == "Jour précédent":
-            date_debut_filtre = (maintenant - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-            date_fin_filtre = maintenant.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(seconds=1)
+            date_debut_filtre = aujourdhui - timedelta(days=1)
+            date_fin_filtre = aujourdhui - timedelta(days=1)
         elif choix_periode == "Cette semaine":
-            date_debut_filtre = maintenant - timedelta(days=maintenant.weekday())
-            date_debut_filtre = date_debut_filtre.replace(hour=0, minute=0, second=0, microsecond=0)
-            date_fin_filtre = maintenant
+            date_debut_filtre = aujourdhui - timedelta(days=aujourdhui.weekday())
+            date_fin_filtre = aujourdhui
         elif choix_periode == "Ce mois":
-            date_debut_filtre = maintenant.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            date_fin_filtre = maintenant
+            date_debut_filtre = aujourdhui.replace(day=1)
+            date_fin_filtre = aujourdhui
         elif choix_periode == "Cette année":
-            date_debut_filtre = maintenant.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-            date_fin_filtre = maintenant
+            date_debut_filtre = aujourdhui.replace(month=1, day=1)
+            date_fin_filtre = aujourdhui
         elif choix_periode == "Personnalisée":
             with col_p2:
                 mode_perso = st.radio("", ["Un jour", "Plusieurs jours"], horizontal=True)
                 if mode_perso == "Un jour":
-                    date_choisie = st.date_input("Sélectionner le jour", maintenant.date())
-                    date_debut_filtre = datetime.combine(date_choisie, datetime.min.time())
-                    date_fin_filtre = datetime.combine(date_choisie, datetime.max.time())
+                    date_choisie = st.date_input("Sélectionner le jour", aujourdhui)
+                    date_debut_filtre = date_choisie
+                    date_fin_filtre = date_choisie
                 else:
-                    dates_choisies = st.date_input("Sélectionner la plage de dates", [maintenant.date(), maintenant.date()])
-                    if isinstance(dates_choisies, list) or isinstance(dates_choisies, tuple):
+                    dates_choisies = st.date_input("Sélectionner la plage de dates", [aujourdhui - timedelta(days=7), aujourdhui])
+                    if isinstance(dates_choisies, (list, tuple)):
                         if len(dates_choisies) == 2:
-                            date_debut_filtre = datetime.combine(dates_choisies[0], datetime.min.time())
-                            date_fin_filtre = datetime.combine(dates_choisies[1], datetime.max.time())
+                            date_debut_filtre = dates_choisies[0]
+                            date_fin_filtre = dates_choisies[1]
                         elif len(dates_choisies) == 1:
-                            date_debut_filtre = datetime.combine(dates_choisies[0], datetime.min.time())
-                            date_fin_filtre = datetime.combine(dates_choisies[0], datetime.max.time())
+                            date_debut_filtre = dates_choisies[0]
+                            date_fin_filtre = dates_choisies[0]
 
         st.divider()
         # 3. INTERFACE DES FILTRES
