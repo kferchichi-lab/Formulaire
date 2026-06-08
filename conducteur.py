@@ -313,4 +313,315 @@ with tab_base:
             df_filtre = df_filtre[(df_filtre['Date_Parsed'] >= date_debut_filtre) & (df_filtre['Date_Parsed'] <= date_fin_filtre)]
             
         if filtre_presse:
-            df_filtre = df_filtre[df_filtre["Presse"].
+            df_filtre = df_filtre[df_filtre["Presse"].isin(filtre_presse)]
+        if filtre_cause:
+            df_filtre = df_filtre[df_filtre["Cause_Filtre_Standard"].isin(filtre_cause)]
+           
+        colonnes_visibles = ['Date', 'Presse', 'Poste', 'Filiere', 'Lopin', 'Duree_Min', 'Cause']
+        colonnes_existantes = [c for c in colonnes_visibles if c in df_filtre.columns]
+        
+        df_pour_affichage = df_filtre[colonnes_existantes].copy()
+        traductions = {
+            'Date': 'Date', 'Presse': 'Presse', 'Poste': 'Poste', 
+            'Filiere': 'Filière', 'Lopin': 'Lopin', 
+            'Duree_Min': 'Durée (Min)', 'Cause': "Cause de l'arrêt"
+        }
+        df_pour_affichage.rename(columns=traductions, inplace=True)
+            
+        st.dataframe(df_pour_affichage, use_container_width=True, hide_index=True)
+
+        csv = df_pour_affichage.to_csv(index=False, sep=";").encode('utf-8-sig')
+        st.download_button(
+            label="📥 Télécharger la base filtrée pour Excel",
+            data=csv,
+            file_name=f"base_arrets_TPR_{datetime.now().strftime('%d_%m_%Y')}.csv",
+            mime="text/csv",
+        )
+    else:
+        st.info("Aucune donnée n'a encore été enregistrée.")
+
+# =========================================================================
+# 📈 ONGLET 3 : ANALYSE GRAPHIQUE
+# =========================================================================
+with tab_stats:
+    date_debut_stats, date_fin_stats, choix_periode_stats = generer_filtre_temporel("stats")
+    st.divider()
+
+    if os.path.isfile(DB_FILE):
+        df_brut_stats = pd.read_csv(DB_FILE, sep=";")
+        
+        if 'Date' in df_brut_stats.columns:
+            df_brut_stats['Date_Parsed'] = pd.to_datetime(df_brut_stats['Date'], format='%d/%m/%Y', errors='coerce').dt.date
+        if 'Duree_Min' in df_brut_stats.columns:
+            df_brut_stats['Duree_Min'] = pd.to_numeric(df_brut_stats['Duree_Min'], errors='coerce').fillna(0).astype(int)
+        
+        # Harmonisation du nom de la colonne filière (Prend en compte Filiere ou Filière)
+        if 'Filière' in df_brut_stats.columns:
+            df_brut_stats.rename(columns={'Filière': 'Filiere'}, inplace=True)
+            
+        if date_debut_stats is not None and date_fin_stats is not None:
+            df_stats_filtre_date = df_brut_stats[(df_brut_stats['Date_Parsed'] >= date_debut_stats) & (df_brut_stats['Date_Parsed'] <= date_fin_stats)]
+        else:
+            df_stats_filtre_date = df_brut_stats.copy()
+
+        st.subheader("Analyse des causes par Presse")
+        
+        liste_presses_dispo = df_stats_filtre_date["Presse"].dropna().unique() if not df_stats_filtre_date.empty else []
+        
+        presse_filtre = st.multiselect(
+            "Sélectionner les presses à analyser :", 
+            options=liste_presses_dispo, 
+            default=liste_presses_dispo
+        )
+        
+        if not df_stats_filtre_date.empty and len(presse_filtre) > 0:
+            df_filtered = df_stats_filtre_date[df_stats_filtre_date["Presse"].isin(presse_filtre)].copy()
+            df_filtered['Cause'] = df_filtered['Cause'].fillna("A")
+            df_filtered['Code_Lettre'] = df_filtered['Cause'].str[0].str.upper()
+            
+            mapping_noms = {
+                "R": "R - Raclage du conteneur",
+                "O": "O - Outillage",
+                "H": "H - Problème Hydraulique",
+                "T": "T - Problème de Température",
+                "A": "A - Autres"
+            }
+            df_filtered['Cause_Standard'] = df_filtered['Code_Lettre'].map(mapping_noms).fillna("A - Autres")
+            
+            if df_filtered.empty:
+                st.warning("⚠️ Aucune donnée trouvée pour les critères et presses sélectionnées.")
+            else:
+                fig = px.pie(
+                    df_filtered, 
+                    names='Cause_Standard',
+                    title=f"Répartition des causes - {', '.join(presse_filtre)}",
+                    hole=0.4, 
+                    color_discrete_sequence=px.colors.qualitative.Pastel
+                )
+                fig.update_traces(textposition='inside', textinfo='percent')
+                fig.update_layout(legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.05))
+                st.plotly_chart(fig, use_container_width=True)
+
+                st.divider()
+                
+                df_temp = df_filtered.copy()
+                df_temp['Code_Cause'] = df_temp['Code_Lettre']
+
+                st.subheader("Total des minutes d'arrêt par cause")
+                fig2 = px.bar(
+                    df_temp, 
+                    x='Code_Cause', 
+                    y='Duree_Min', 
+                    color='Presse', 
+                    barmode='group',
+                    title="Durée totale des arrêts par code de cause (min)",
+                    labels={'Code_Cause': 'Cause (Code)', 'Duree_Min': 'Minutes'},
+                    color_discrete_map={"Presse 4": "#E63946", "Presse 6": "#457B9D", "Presse 7": "#2A9D8F"}
+                )
+                fig2.update_traces(marker_line_color='white', marker_line_width=1, opacity=0.9)
+                fig2.update_layout(xaxis_tickangle=0)    
+                st.plotly_chart(fig2, use_container_width=True)
+        
+                df_filtered['Code'] = df_filtered['Cause'].str[0]
+                tableau_somme = df_filtered.groupby('Code')['Duree_Min'].sum().reset_index()
+                tableau_somme = tableau_somme.sort_values(by='Duree_Min', ascending=False)          
+                tableau_somme.columns = ['Code Cause', 'Temps Total (Minutes)']
+                col_vide, col_tab, col_espace, col_metrique = st.columns([1, 2, 0.5, 2])
+
+                with col_tab:
+                    st.dataframe(tableau_somme, use_container_width=False, hide_index=True, width=400)
+
+                with col_metrique:
+                    st.markdown("<br><br>", unsafe_allow_html=True)
+                    total_general = tableau_somme['Temps Total (Minutes)'].sum()
+                    st.metric("TOTAL GÉNÉRAL", f"{total_general} min")
+        
+                st.info("**Rappel des codes :** **T** : Problème de Température | **H** : Problème Hydraulique | **O** : Outillage | **R** : Raclage | **A** : Autres..")
+                
+                # =========================================================================
+                # 🔥 TOP 10 FILIÈRES CORRIGÉ ET TOTALEMENT SÉCURISÉ
+                # =========================================================================
+                st.divider()
+                st.subheader("🔝 Top 10 des Filières les plus pénalisantes par Presse")
+                st.write("Visualisation des 10 filières causant le plus de temps d'arrêt, croisée avec leur fréquence d'apparition (nombre de pannes).")
+                
+                if 'Filiere' in df_filtered.columns:
+                    # Conversion forcée en texte pour empêcher les bugs numériques (ex: 52000.0)
+                    df_filtered['Filiere_Clean'] = df_filtered['Filiere'].fillna("Inconnue").astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+                    # Suppression des lignes vides ou anormales
+                    df_filtered = df_filtered[(df_filtered['Filiere_Clean'] != "") & (df_filtered['Filiere_Clean'].str.lower() != "nan")]
+
+                    for pr in presse_filtre:
+                        df_pr = df_filtered[df_filtered['Presse'] == pr]
+                        if not df_pr.empty:
+                            # Calcul de la somme des minutes d'arrêt et de la fréquence de panne par filière
+                            df_filiere_stats = df_pr.groupby('Filiere_Clean').agg(
+                                Duree_Totale=('Duree_Min', 'sum'),
+                                Frequence=('Filiere_Clean', 'count')
+                            ).reset_index()
+                            
+                            # Extraction du TOP 10 des filières
+                            top_10_filieres = df_filiere_stats.sort_values(by='Duree_Totale', ascending=False).head(10)
+                            
+                            if not top_10_filieres.empty:
+                                fig_comb = go.Figure()
+
+                                # Axe Y Gauche : Temps d'arrêt (Barres)
+                                fig_comb.add_trace(
+                                    go.Bar(
+                                        x=top_10_filieres['Filiere_Clean'],
+                                        y=top_10_filieres['Duree_Totale'],
+                                        name="Durée cumulée (min)",
+                                        marker_color='#0047AB',
+                                        opacity=0.85
+                                    )
+                                )
+
+                                # Axe Y Droit : Fréquence d'utilisation problématique (Courbe/Ligne)
+                                fig_comb.add_trace(
+                                    go.Scatter(
+                                        x=top_10_filieres['Filiere_Clean'],
+                                        y=top_10_filieres['Frequence'],
+                                        name="Fréquence d'apparition (nbr)",
+                                        mode='lines+markers',
+                                        line=dict(color='#FF7F0E', width=3),
+                                        marker=dict(size=8, symbol="circle"),
+                                        yaxis="y2"
+                                    )
+                                )
+
+                                fig_comb.update_layout(
+                                    title=f"Top 10 Filières Critiques - {pr}",
+                                    xaxis=dict(title="N° Référence Filière", type='category'),
+                                    yaxis=dict(
+                                        title="Durée totale des arrêts (Minutes)",
+                                        titlefont=dict(color="#0047AB"),
+                                        tickfont=dict(color="#0047AB")
+                                    ),
+                                    yaxis2=dict(
+                                        title="Nombre d'incidents (Fréquence)",
+                                        titlefont=dict(color="#FF7F0E"),
+                                        tickfont=dict(color="#FF7F0E"),
+                                        overlaying="y",
+                                        side="right",
+                                        anchor="x"
+                                    ),
+                                    legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1),
+                                    height=450
+                                )
+                                
+                                st.plotly_chart(fig_comb, use_container_width=True)
+                            else:
+                                st.caption(f"Données insuffisantes pour générer le graphique des filières de la {pr}.")
+                        else:
+                            st.info(f"ℹ️ Aucun incident lié aux filières enregistré pour la {pr} sur cette période.")
+                else:
+                    st.error("❌ La colonne 'Filiere' ou 'Filière' n'a pas été détectée dans votre base de données.")
+
+                # =========================================================================
+                # 📄 EXPORT RAPPORT PDF
+                # =========================================================================
+                st.divider()
+                st.write("### 📄 Rapport d'Activité PDF")
+                
+                if st.button("📊 Générer le Rapport PDF Analytique", key="btn_pdf"):
+                    with st.spinner("Création du rapport PDF en cours..."):
+                        df_pie = df_filtered.groupby('Cause_Standard').size().reset_index(name='Nombre')
+                        
+                        fig_pdf1, ax_pdf1 = plt.subplots(figsize=(6, 4))
+                        ax_pdf1.pie(df_pie['Nombre'], labels=df_pie['Cause_Standard'], autopct='%1.1f%%', startangle=90,
+                                    colors=['#4ed0db', '#fcd170', '#ff9f73', '#d0a2f7', '#70a1ff'])
+                        ax_pdf1.axis('equal')
+                        plt.title("Répartition des Causes d'Arrêt", fontsize=12, fontweight='bold', pad=10)
+                        
+                        img_buf1 = io.BytesIO()
+                        plt.savefig(img_buf1, format='png', bbox_inches='tight', dpi=150)
+                        img_buf1.seek(0)
+                        plt.close()
+
+                        df_bar_pdf = df_filtered.groupby(['Code_Lettre', 'Presse'])['Duree_Min'].sum().unstack().fillna(0)
+                        fig_pdf2, ax_pdf2 = plt.subplots(figsize=(7, 3.5))
+                        df_bar_pdf.plot(kind='bar', ax=ax_pdf2, width=0.6, edgecolor='black', alpha=0.9)
+                        ax_pdf2.set_ylabel("Minutes", fontsize=10)
+                        ax_pdf2.set_xlabel("Cause (Code)", fontsize=10)
+                        ax_pdf2.set_title("Durée Totale des Arrêts par Code de Cause (min)", fontsize=12, fontweight='bold', pad=10)
+                        plt.xticks(rotation=0)
+                        plt.grid(axis='y', linestyle='--', alpha=0.5)
+                        
+                        img_buf2 = io.BytesIO()
+                        plt.savefig(img_buf2, format='png', bbox_inches='tight', dpi=150)
+                        img_buf2.seek(0)
+                        plt.close()
+
+                        pdf = FPDF()
+                        pdf.add_page()
+                        pdf.set_fill_color(30, 39, 44) 
+                        pdf.rect(0, 0, 210, 35, 'F')
+                        
+                        pdf.set_text_color(255, 255, 255)
+                        pdf.set_font("Arial", 'B', 16)
+                        pdf.cell(0, 12, "RAPPORT ANALYTIQUE DES INCIDENTS - CHAPEAUX", ln=True, align='C')
+                        pdf.set_font("Arial", 'I', 10)
+                        pdf.cell(0, 5, "Suivi de la Performance de Production & Maintenance - TPR", ln=True, align='C')
+                        
+                        pdf.ln(15)
+                        pdf.set_text_color(0, 0, 0)
+                        
+                        pdf.set_font("Arial", 'B', 11)
+                        pdf.cell(40, 7, "Date de génération :", 0)
+                        pdf.set_font("Arial", '', 11)
+                        pdf.cell(60, 7, heure_locale.strftime('%d/%m/%Y à %H:%M'), 0, True)
+                        
+                        pdf.set_font("Arial", 'B', 11)
+                        pdf.cell(40, 7, "Filtre Presse(s) :", 0)
+                        pdf.set_font("Arial", '', 11)
+                        pdf.cell(60, 7, ", ".join(presse_filtre), 0, True)
+                        
+                        pdf.set_font("Arial", 'B', 11)
+                        pdf.cell(40, 7, "Période analysée :", 0)
+                        pdf.set_font("Arial", '', 11)
+                        pdf.cell(60, 7, choix_periode_stats, 0, True)
+                        
+                        pdf.line(10, 60, 200, 60)
+                        pdf.ln(8)
+                        
+                        pdf.set_font("Arial", 'B', 13)
+                        pdf.cell(0, 8, "1. Répartition Proportionnelle des Défaillances", ln=True)
+                        pdf.ln(2)
+                        pdf.image(img_buf1, x=35, w=140)
+                        pdf.ln(10)
+                        
+                        pdf.set_font("Arial", 'B', 13)
+                        pdf.cell(0, 8, "2. Analyse Quantifiée des Temps d'Arrêt", ln=True)
+                        pdf.ln(2)
+                        pdf.image(img_buf2, x=20, w=170)
+                        
+                        pdf.set_y(-25)
+                        pdf.set_font("Arial", 'I', 8)
+                        pdf.set_text_color(120, 120, 120)
+                        pdf.cell(0, 5, "Rapport technique automatisé TPR - Direction Maintenance et Travaux Neufs", 0, 1, 'C')
+
+                        pdf_output = bytes(pdf.output())
+                        
+                    st.success("✅ Le rapport PDF a été généré avec succès !")
+                    st.download_button(
+                        label="📥 Télécharger le fichier PDF",
+                        data=pdf_output,
+                        file_name=f"Rapport_Incidents_TPR_{datetime.now().strftime('%d_%m_%Y')}.pdf",
+                        mime="application/pdf"
+                    )
+        else:
+            st.info("Sélectionnez au moins une presse ci-dessus pour afficher l'analyse graphique.")
+    else:
+        st.info("Enregistrez des données pour voir les graphiques.")
+
+st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
+st.markdown(
+    f"""
+    <div style="text-align: center; color: gray; font-size: 0.8em; border-top: 1px solid #eee; padding-top: 10px;">
+        © 2026 TPR - Système de Suivi Maintenance <br>
+        Direction Maintenance et Travaux Neufs - DMTN 
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
