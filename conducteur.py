@@ -197,7 +197,7 @@ def generer_filtre_temporel(cle_unique):
 tab_saisie, tab_base, tab_stats = st.tabs(["➕ Nouvelle saisie", "📊 Consulter la base de données", "📈 Analyse graphique"])
 
 # =========================================================================
-# ➕ ONGLET 1 : SAISIE (Structure révisée et stable)
+# ➕ ONGLET 1 : SAISIE
 # =========================================================================
 with tab_saisie:
     if not presse_choisie:
@@ -205,15 +205,12 @@ with tab_saisie:
     else:
         st.subheader(f"📝 Saisie d'incident : {presse_choisie}")
         
-        # Initialisation d'une clé de formulaire unique dans le session_state pour forcer le nettoyage au besoin
         if "form_key_suffix" not in st.session_state:
             st.session_state.form_key_suffix = 0
 
-        # Conteneur dynamique permettant de vider intégralement l'interface après validation
         conteneur_formulaire = st.empty()
         
         with conteneur_formulaire.container():
-            # Utilisation de la clé dynamique sur le formulaire
             with st.form(key=f"form_incident_{st.session_state.form_key_suffix}", clear_on_submit=True):
                 col1, col2 = st.columns(2)
                 with col1:
@@ -249,9 +246,10 @@ with tab_saisie:
 
                         for raison in raisons_disponibles:
                             if st.checkbox(raison, key=f"cb_{code_lettre}_{raison}"):
-                                raisins_choisies.append(raison)
+                                raisons_choisies.append(raison)
 
-                        raisons_finales_texte = ", ".join(raisons_choisies) if raisins_choisies else "Non spécifié"
+                        # CORRIGÉ : Utilisation de raisons_choisies (sans la faute de frappe)
+                        raisons_finales_texte = ", ".join(raisons_choisies) if raisons_choisies else "Non spécifié"
                         cause_finale = f"{cause_principale} : {raisons_finales_texte}"
                     else:
                         st.info("💡 Veuillez sélectionner une nature de cause pour voir les raisons détaillées.")
@@ -278,16 +276,15 @@ with tab_saisie:
                     }
                     sauvegarder_donnees(nouvelle_entree)
                     
-                    # Nettoyage des états internes liés aux checkboxes pour éviter qu'elles ne restent bloquées
+                    # Nettoyage préventif des checkboxes
                     for lettre, raisons in DICTIONNAIRE_CODES.items():
                         for raison in raisons:
                             cle_cb = f"cb_{lettre}_{raison}"
                             if cle_cb in st.session_state:
                                 st.session_state[cle_cb] = False
                     
-                    # On change l'identifiant du formulaire pour forcer Streamlit à recréer un composant vierge
+                    # Forcer la réinitialisation totale du formulaire
                     st.session_state.form_key_suffix += 1
-                    
                     st.success(f"✅ Incident enregistré pour la {presse_choisie}")
                     st.rerun()
 
