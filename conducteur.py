@@ -29,7 +29,7 @@ def sauvegarder_donnees(data):
     else:
         df.to_csv(DB_FILE, mode='a', index=False, header=False, sep=";", encoding="utf-8-sig")
 
-# --- NOUVELLE FONCTION POUR FORCER LE VIDAGE DES CHAMPS ---
+# --- FONCTION POUR FORCER LE VIDAGE DES CHAMPS ---
 def reinitialiser_formulaire():
     # Liste de toutes les clés de session utilisées dans le formulaire de saisie
     cles_a_vider = ["input_filiere", "input_lopin", "input_duree", "cause_gnerale_select", "input_commentaire"]
@@ -189,7 +189,7 @@ def generer_filtre_temporel(cle_unique):
     elif choix_periode == "Jour précédent":
         date_debut = aujourdhui - timedelta(days=1)
         date_fin = aujourdhui - timedelta(days=1)
-    elif choix_weekly == "Cette semaine":
+    elif choix_periode == "Cette semaine": # <-- CORRIGÉ : Correction de choix_weekly par choix_periode
         date_debut = aujourdhui - timedelta(days=aujourdhui.weekday())
         date_fin = aujourdhui
     elif choix_periode == "Ce mois":
@@ -220,7 +220,7 @@ def generer_filtre_temporel(cle_unique):
 tab_saisie, tab_base, tab_stats = st.tabs(["➕ Nouvelle saisie", "📊 Consulter la base de données", "📈 Analyse graphique"])
 
 # =========================================================================
-# ➕ ONGLET 1 : SAISIE (Avec réinitialisation manuelle infaillible)
+# ➕ ONGLET 1 : SAISIE
 # =========================================================================
 with tab_saisie:
     if not presse_choisie:
@@ -293,7 +293,7 @@ with tab_saisie:
                 }
                 sauvegarder_donnees(nouvelle_entree)
                 
-                # On déclenche le vidage manuel forcé juste avant le rechargement de l'écran
+                # On déclenche le vidage manuel forcé
                 reinitialiser_formulaire()
                 
                 st.success(f"✅ Incident enregistré pour la {presse_choisie}")
