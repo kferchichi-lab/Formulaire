@@ -146,6 +146,7 @@ with col_titre:
     st.markdown("#### Direction Maintenance et Travaux Neufs")
 st.divider()
 
+# Fonction centrale permettant de générer le widget de filtrage temporel là où on le souhaite
 def generer_filtre_temporel(cle_unique):
     st.write("### 📅 Sélection de la Période d'Analyse")
     col_p1, col_p2 = st.columns([1, 2])
@@ -153,7 +154,7 @@ def generer_filtre_temporel(cle_unique):
         choix_periode = st.selectbox(
             "Période de filtrage :",
             options=["Les dernières 24 heures", "Jour précédent", "Cette semaine", "Ce mois", "Cette année", "Personnalisée"],
-            index=3,
+            index=3, # "Ce mois" par défaut comme sur votre capture d'écran
             key=f"choix_per_{cle_unique}"
         )
     aujourdhui = datetime.now().date()
@@ -197,101 +198,82 @@ def generer_filtre_temporel(cle_unique):
 tab_saisie, tab_base, tab_stats = st.tabs(["➕ Nouvelle saisie", "📊 Consulter la base de données", "📈 Analyse graphique"])
 
 # =========================================================================
-# ➕ ONGLET 1 : SAISIE
+# ➕ ONGLET 1 : SAISIE (Totalement nettoyé de la zone de période)
 # =========================================================================
 with tab_saisie:
     if not presse_choisie:
         st.info("👈 Veuillez sélectionner une presse dans le menu à gauche pour accéder au formulaire.")
     else:
         st.subheader(f"📝 Saisie d'incident : {presse_choisie}")
+        col1, col2 = st.columns(2)
+        with col1:
+            date_j = st.date_input("Date de l'arrêt", datetime.now())
+            poste = st.radio("Poste de travail", ["A", "B", "C"], horizontal=True)
+            ref_filiere = st.text_input("Référence de la filière", placeholder="Ex: 52000")
+       
+        with col2:
+            num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12")
+            duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=1)
+            
+            cause_principale = st.selectbox(
+                "Nature de la cause (Générale) :",
+                options=[
+                    "R - Raclage du conteneur",
+                    "O - Outillage",
+                    "H - Problème hydraulique",
+                    "T - Problème de température",
+                    "A - Autres"
+                ],
+                index=None,  
+                placeholder="--- Choisir une cause générale ---", 
+                key="cause_gnerale_select"
+            )
+            raisons_finales_texte = "Non spécifié"
+            if cause_principale is not None:
+                code_lettre = cause_principale[0]
+                raisons_disponibles = DICTIONNAIRE_CODES.get(code_lettre, DICTIONNAIRE_CODES["A"])
+
+                st.write("**Sélectionnez la ou les raisons détaillées :**")
+                raisons_choisies = []
+
+                for raison in raisons_disponibles:
+                    if st.checkbox(raison, key=f"cb_{code_lettre}_{raison}"):
+                        raisons_choisies.append(raison)
+
+                raisons_finales_texte = ", ".join(raisons_choisies) if raisons_choisies else "Non spécifié"
+                cause_finale = f"{cause_principale} : {raisons_finales_texte}"
+            else:
+                st.info("💡 Veuillez sélectionner une nature de cause pour voir les raisons détaillées.")
+
+        commentaire = st.text_area("Observations / Détails de l'incident")
         
-        if "form_key_suffix" not in st.session_state:
-            st.session_state.form_key_suffix = 0
-
-        conteneur_formulaire = st.empty()
-        
-        with conteneur_formulaire.container():
-            with st.form(key=f"form_incident_{st.session_state.form_key_suffix}", clear_on_submit=True):
-                col1, col2 = st.columns(2)
-                with col1:
-                    date_j = st.date_input("Date de l'arrêt", datetime.now(), key="input_date")
-                    poste = st.radio("Poste de travail", ["A", "B", "C"], horizontal=True, key="input_poste")
-                    ref_filiere = st.text_input("Référence de la filière", placeholder="Ex: 52000", key="input_filiere")
-               
-                with col2:
-                    num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12", key="input_lopin")
-                    duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=1, key="input_duree")
-                    
-                    cause_principale = st.selectbox(
-                        "Nature de la cause (Générale) :",
-                        options=[
-                            "R - Raclage du conteneur",
-                            "O - Outillage",
-                            "H - Problème hydraulique",
-                            "T - Problème de température",
-                            "A - Autres"
-                        ],
-                        index=None,  
-                        placeholder="--- Choisir une cause générale ---", 
-                        key="cause_gnerale_select"
-                    )
-                    
-                    raisons_finales_texte = "Non spécifié"
-                    if cause_principale is not None:
-                        code_lettre = cause_principale[0]
-                        raisons_disponibles = DICTIONNAIRE_CODES.get(code_lettre, DICTIONNAIRE_CODES["A"])
-
-                        st.write("**Sélectionnez la ou les raisons détaillées :**")
-                        raisons_choisies = []
-
-                        for raison in raisons_disponibles:
-                            if st.checkbox(raison, key=f"cb_{code_lettre}_{raison}"):
-                                raisons_choisies.append(raison)
-
-                        # CORRIGÉ : Utilisation de raisons_choisies (sans la faute de frappe)
-                        raisons_finales_texte = ", ".join(raisons_choisies) if raisons_choisies else "Non spécifié"
-                        cause_finale = f"{cause_principale} : {raisons_finales_texte}"
-                    else:
-                        st.info("💡 Veuillez sélectionner une nature de cause pour voir les raisons détaillées.")
-
-                commentaire = st.text_area("Observations / Détails de l'incident", key="input_commentaire")
-                submitted = st.form_submit_button("ENREGISTRER L'INCIDENT")
-                
-            if submitted:
-                if not ref_filiere or not num_lopin:
-                    st.error("Veuillez remplir les champs obligatoires (Filière et Lopin).")
-                elif raisons_finales_texte == "Non spécifié":
-                    st.warning("⚠️ Veuillez cocher au moins une raison détaillée avant d'enregistrer.")
-                else:
-                    nouvelle_entree = {
-                        "Date": date_j.strftime("%d/%m/%Y"),
-                        "Heure_Saisie": datetime.now().strftime("%H:%M:%S"),
-                        "Presse": presse_choisie,
-                        "Poste": poste,
-                        "Filiere": ref_filiere,
-                        "Lopin": num_lopin,
-                        "Duree_Min": duree,
-                        "Cause": cause_finale, 
-                        "Observations": commentaire
-                    }
-                    sauvegarder_donnees(nouvelle_entree)
-                    
-                    # Nettoyage préventif des checkboxes
-                    for lettre, raisons in DICTIONNAIRE_CODES.items():
-                        for raison in raisons:
-                            cle_cb = f"cb_{lettre}_{raison}"
-                            if cle_cb in st.session_state:
-                                st.session_state[cle_cb] = False
-                    
-                    # Forcer la réinitialisation totale du formulaire
-                    st.session_state.form_key_suffix += 1
-                    st.success(f"✅ Incident enregistré pour la {presse_choisie}")
-                    st.rerun()
+        with st.form("form_validation", clear_on_submit=True):
+            submitted = st.form_submit_button("ENREGISTRER L'INCIDENT")
+        if submitted:
+            if not ref_filiere or not num_lopin:
+                st.error("Veuillez remplir les champs obligatoires (Filière et Lopin).")
+            elif raisons_finales_texte == "Non spécifié":
+                st.warning("⚠️ Veuillez cocher au moins une raison détaillée avant d'enregistrer.")
+            else:
+                nouvelle_entree = {
+                    "Date": date_j.strftime("%d/%m/%Y"),
+                    "Heure_Saisie": datetime.now().strftime("%H:%M:%S"),
+                    "Presse": presse_choisie,
+                    "Poste": poste,
+                    "Filiere": ref_filiere,
+                    "Lopin": num_lopin,
+                    "Duree_Min": duree,
+                    "Cause": cause_finale, 
+                    "Observations": commentaire
+                }
+                sauvegarder_donnees(nouvelle_entree)
+                st.success(f"✅ Incident enregistré pour la {presse_choisie}")
 
 # =========================================================================
-# 📊 ONGLET 2 : CONSULTATION BASE DE DONNÉES
+# 📊 ONGLET 2 : CONSULTATION BASE DE DONNÉES (Contient sa propre zone période)
 # =========================================================================
 with tab_base:
+    # Intégration du calendrier spécifiquement pour cet onglet
     date_debut_filtre, date_fin_filtre, choix_periode = generer_filtre_temporel("base")
     st.divider()
 
@@ -360,9 +342,10 @@ with tab_base:
         st.info("Aucune donnée n'a encore été enregistrée.")
 
 # =========================================================================
-# 📈 ONGLET 3 : ANALYSE GRAPHIQUE
+# 📈 ONGLET 3 : ANALYSE GRAPHIQUE (Contient sa propre zone période)
 # =========================================================================
 with tab_stats:
+    # Intégration du calendrier spécifiquement pour cet onglet de statistiques
     date_debut_stats, date_fin_stats, choix_periode_stats = generer_filtre_temporel("stats")
     st.divider()
 
