@@ -29,6 +29,28 @@ def sauvegarder_donnees(data):
     else:
         df.to_csv(DB_FILE, mode='a', index=False, header=False, sep=";", encoding="utf-8-sig")
 
+# --- NOUVELLE FONCTION POUR FORCER LE VIDAGE DES CHAMPS ---
+def reinitialiser_formulaire():
+    # Liste de toutes les clés de session utilisées dans le formulaire de saisie
+    cles_a_vider = ["input_filiere", "input_lopin", "input_duree", "cause_gnerale_select", "input_commentaire"]
+    
+    # On vide aussi dynamiquement les clés des cases à cocher (checkboxes)
+    for lettre, raisons in DICTIONNAIRE_CODES.items():
+        for raison in raisons:
+            cles_a_vider.append(f"cb_{lettre}_{raison}")
+            
+    # Application de la réinitialisation dans le session_state
+    for cle in cles_a_vider:
+        if cle in st.session_state:
+            if "cb_" in cle:
+                st.session_state[cle] = False  # Décoche les cases
+            elif cle == "cause_gnerale_select":
+                st.session_state[cle] = None   # Remet le selectbox à zéro
+            elif cle == "input_duree":
+                st.session_state[cle] = 0      # Remet la durée à 0
+            else:
+                st.session_state[cle] = ""     # Vide les textes
+
 st.markdown("""
     <style>
         header { visibility: visible !important; height: 60px !important; }
@@ -167,7 +189,7 @@ def generer_filtre_temporel(cle_unique):
     elif choix_periode == "Jour précédent":
         date_debut = aujourdhui - timedelta(days=1)
         date_fin = aujourdhui - timedelta(days=1)
-    elif choix_periode == "Cette semaine":
+    elif choix_weekly == "Cette semaine":
         date_debut = aujourdhui - timedelta(days=aujourdhui.weekday())
         date_fin = aujourdhui
     elif choix_periode == "Ce mois":
@@ -198,57 +220,60 @@ def generer_filtre_temporel(cle_unique):
 tab_saisie, tab_base, tab_stats = st.tabs(["➕ Nouvelle saisie", "📊 Consulter la base de données", "📈 Analyse graphique"])
 
 # =========================================================================
-# ➕ ONGLET 1 : SAISIE (Totalement nettoyé de la zone de période)
+# ➕ ONGLET 1 : SAISIE (Avec réinitialisation manuelle infaillible)
 # =========================================================================
 with tab_saisie:
     if not presse_choisie:
         st.info("👈 Veuillez sélectionner une presse dans le menu à gauche pour accéder au formulaire.")
     else:
         st.subheader(f"📝 Saisie d'incident : {presse_choisie}")
-        col1, col2 = st.columns(2)
-        with col1:
-            date_j = st.date_input("Date de l'arrêt", datetime.now())
-            poste = st.radio("Poste de travail", ["A", "B", "C"], horizontal=True)
-            ref_filiere = st.text_input("Référence de la filière", placeholder="Ex: 52000")
-       
-        with col2:
-            num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12")
-            duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=1)
-            
-            cause_principale = st.selectbox(
-                "Nature de la cause (Générale) :",
-                options=[
-                    "R - Raclage du conteneur",
-                    "O - Outillage",
-                    "H - Problème hydraulique",
-                    "T - Problème de température",
-                    "A - Autres"
-                ],
-                index=None,  
-                placeholder="--- Choisir une cause générale ---", 
-                key="cause_gnerale_select"
-            )
-            raisons_finales_texte = "Non spécifié"
-            if cause_principale is not None:
-                code_lettre = cause_principale[0]
-                raisons_disponibles = DICTIONNAIRE_CODES.get(code_lettre, DICTIONNAIRE_CODES["A"])
-
-                st.write("**Sélectionnez la ou les raisons détaillées :**")
-                raisons_choisies = []
-
-                for raison in raisons_disponibles:
-                    if st.checkbox(raison, key=f"cb_{code_lettre}_{raison}"):
-                        raisons_choisies.append(raison)
-
-                raisons_finales_texte = ", ".join(raisons_choisies) if raisons_choisies else "Non spécifié"
-                cause_finale = f"{cause_principale} : {raisons_finales_texte}"
-            else:
-                st.info("💡 Veuillez sélectionner une nature de cause pour voir les raisons détaillées.")
-
-        commentaire = st.text_area("Observations / Détails de l'incident")
         
+        # Formulaire standard
         with st.form("form_validation", clear_on_submit=True):
+            col1, col2 = st.columns(2)
+            with col1:
+                date_j = st.date_input("Date de l'arrêt", datetime.now(), key="input_date")
+                poste = st.radio("Poste de travail", ["A", "B", "C"], horizontal=True, key="input_poste")
+                ref_filiere = st.text_input("Référence de la filière", placeholder="Ex: 52000", key="input_filiere")
+           
+            with col2:
+                num_lopin = st.text_input("Numéro du lopin", placeholder="Ex: 12", key="input_lopin")
+                duree = st.number_input("Durée de l'arrêt (minutes)", min_value=0, step=1, key="input_duree")
+                
+                cause_principale = st.selectbox(
+                    "Nature de la cause (Générale) :",
+                    options=[
+                        "R - Raclage du conteneur",
+                        "O - Outillage",
+                        "H - Problème hydraulique",
+                        "T - Problème de température",
+                        "A - Autres"
+                    ],
+                    index=None,  
+                    placeholder="--- Choisir une cause générale ---", 
+                    key="cause_gnerale_select"
+                )
+                raisons_finales_texte = "Non spécifié"
+                if cause_principale is not None:
+                    code_lettre = cause_principale[0]
+                    raisons_disponibles = DICTIONNAIRE_CODES.get(code_lettre, DICTIONNAIRE_CODES["A"])
+
+                    st.write("**Sélectionnez la ou les raisons détaillées :**")
+                    raisons_choisies = []
+
+                    for raison in raisons_disponibles:
+                        if st.checkbox(raison, key=f"cb_{code_lettre}_{raison}"):
+                            raisons_choisies.append(raison)
+
+                    raisons_finales_texte = ", ".join(raisons_choisies) if raisons_choisies else "Non spécifié"
+                    cause_finale = f"{cause_principale} : {raisons_finales_texte}"
+                else:
+                    st.info("💡 Veuillez sélectionner une nature de cause pour voir les raisons détaillées.")
+
+            commentaire = st.text_area("Observations / Détails de l'incident", key="input_commentaire")
+            
             submitted = st.form_submit_button("ENREGISTRER L'INCIDENT")
+            
         if submitted:
             if not ref_filiere or not num_lopin:
                 st.error("Veuillez remplir les champs obligatoires (Filière et Lopin).")
@@ -267,13 +292,17 @@ with tab_saisie:
                     "Observations": commentaire
                 }
                 sauvegarder_donnees(nouvelle_entree)
+                
+                # On déclenche le vidage manuel forcé juste avant le rechargement de l'écran
+                reinitialiser_formulaire()
+                
                 st.success(f"✅ Incident enregistré pour la {presse_choisie}")
+                st.rerun()
 
 # =========================================================================
-# 📊 ONGLET 2 : CONSULTATION BASE DE DONNÉES (Contient sa propre zone période)
+# 📊 ONGLET 2 : CONSULTATION BASE DE DONNÉES
 # =========================================================================
 with tab_base:
-    # Intégration du calendrier spécifiquement pour cet onglet
     date_debut_filtre, date_fin_filtre, choix_periode = generer_filtre_temporel("base")
     st.divider()
 
@@ -342,10 +371,9 @@ with tab_base:
         st.info("Aucune donnée n'a encore été enregistrée.")
 
 # =========================================================================
-# 📈 ONGLET 3 : ANALYSE GRAPHIQUE (Contient sa propre zone période)
+# 📈 ONGLET 3 : ANALYSE GRAPHIQUE
 # =========================================================================
 with tab_stats:
-    # Intégration du calendrier spécifiquement pour cet onglet de statistiques
     date_debut_stats, date_fin_stats, choix_periode_stats = generer_filtre_temporel("stats")
     st.divider()
 
