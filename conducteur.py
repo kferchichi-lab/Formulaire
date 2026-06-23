@@ -138,10 +138,14 @@ with st.sidebar:
     """)
     st.warning("⚠️ Tolérance : +/- 10°C")
 
-    st.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6q1BtDSDgVnJZFo0hOBfQJoDS6OYiub-qfQ&s", width=150)
-    st.markdown("## Tunisie Profilés d'Aluminium")
-    st.markdown("#### Direction Maintenance et Travaux Neufs")
-st.divider()
+    with st.sidebar:
+        col_logo, col_titre = st.columns([1, 5])
+        with col_logo:
+            st.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6q1BtDSDgVnJZFo0hOBfQJoDS6OYiub-qfQ&s", width=150)
+        with col_titre:
+            st.markdown("## Tunisie Profilés d'Aluminium")
+            st.markdown("#### Direction Maintenance et Travaux Neufs")
+    st.divider()
 
 # Fonction centrale permettant de générer le widget de filtrage temporel là où on le souhaite
 def generer_filtre_temporel(cle_unique):
